@@ -1,0 +1,24 @@
+# permissions for end users to edit cortices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-editor-role
+rules:
+- apiGroups:
+  - cortex.opstrace.io
+  resources:
+  - cortices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cortex.opstrace.io
+  resources:
+  - cortices/status
+  verbs:
+  - get

@@ -1,0 +1,7 @@
+apiVersion: cortex.opstrace.io/v1alpha1
+kind: Cortex
+metadata:
+  name: cortex-sample
+spec:
+  # Add fields here
+  foo: bar

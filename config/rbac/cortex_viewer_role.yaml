@@ -1,0 +1,20 @@
+# permissions for end users to view cortices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cortex-viewer-role
+rules:
+- apiGroups:
+  - cortex.opstrace.io
+  resources:
+  - cortices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cortex.opstrace.io
+  resources:
+  - cortices/status
+  verbs:
+  - get
