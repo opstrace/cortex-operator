@@ -1,0 +1,6 @@
+domain: opstrace.io
+layout:
+- go.kubebuilder.io/v3
+projectName: cortex-operator
+repo: github.com/opstrace/cortex-operator
+version: "3"
