@@ -3,5 +3,4 @@ kind: Cortex
 metadata:
   name: cortex-sample
 spec:
-  # Add fields here
-  foo: bar
+  image: "cortexproject/cortex:master-23628b8"
