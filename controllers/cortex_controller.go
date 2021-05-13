@@ -141,6 +141,12 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeService(req, "ingester", servicePort{"http", 80}, servicePort{"ingester-grpc", 9095})
 	resources = append(resources, o)
 
+	o = makeStatefulSetStoreGateway(req, cortex)
+	resources = append(resources, o)
+
+	o = makeService(req, "store-gateway", servicePort{"http", 80}, servicePort{"store-gateway-grpc", 9095})
+	resources = append(resources, o)
+
 	for _, resource := range resources {
 		// Set up garbage collection. The object (resource.obj) will be
 		// automatically deleted whent he owner (cortex) is deleted.
@@ -463,6 +469,94 @@ func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *k
 			statefulSet.Spec.Template.Spec.ServiceAccountName = ServiceAccountName
 			// https://cortexmetrics.io/docs/guides/running-cortex-on-kubernetes/#take-extra-care-with-ingesters
 			statefulSet.Spec.Template.Spec.TerminationGracePeriodSeconds = pointer.Int64Ptr(2400)
+			statefulSet.Spec.Template.Spec.Volumes = []corev1.Volume{
+				{
+					Name: "cortex",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "cortex",
+							},
+						},
+					},
+				},
+				{
+					Name: "datadir",
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: "datadir",
+						},
+					},
+				},
+			}
+			statefulSet.Spec.VolumeClaimTemplates = []corev1.PersistentVolumeClaim{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "datadir"},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						// Uses the default storage class.
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								"storage": resource.MustParse("30Gi"),
+							},
+						},
+					},
+				},
+			}
+
+			return nil
+		},
+	}
+}
+
+func makeStatefulSetStoreGateway(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *kubernetesResource {
+	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: "store-gateway", Namespace: req.Namespace}}
+
+	return &kubernetesResource{
+		obj: statefulSet,
+		mutator: func() error {
+			statefulSet.Spec.ServiceName = "store-gateway"
+			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
+			statefulSet.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
+			statefulSet.Spec.Selector = &metav1.LabelSelector{
+				MatchLabels: map[string]string{"name": "store-gateway"},
+			}
+			statefulSet.Spec.Template.ObjectMeta.Labels = map[string]string{
+				"name": "store-gateway",
+			}
+			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity("store-gateway")
+			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name:  "store-gateway",
+					Image: cortex.Spec.Image,
+					Args: []string{
+						"-target=store-gateway",
+						"-config.file=/etc/cortex/config.yaml",
+					},
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "http",
+							ContainerPort: 80,
+						},
+						{
+							Name:          "grpc",
+							ContainerPort: 9095,
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							MountPath: "/etc/cortex",
+							Name:      "cortex",
+						},
+						{
+							Name:      "datadir",
+							MountPath: "/cortex",
+						},
+					},
+				},
+			}
+			statefulSet.Spec.Template.Spec.ServiceAccountName = ServiceAccountName
 			statefulSet.Spec.Template.Spec.Volumes = []corev1.Volume{
 				{
 					Name: "cortex",
