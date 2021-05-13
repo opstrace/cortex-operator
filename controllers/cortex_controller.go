@@ -129,10 +129,16 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeHeadlessService(req, "gossip-ring", "memberlist", servicePort{"gossip-ring", 7946})
 	resources = append(resources, o)
 
-	o = makeDeploymentDistributor(req, cortex)
+	o = makeDeployment(req, cortex, "distributor")
 	resources = append(resources, o)
 
 	o = makeService(req, "distributor", servicePort{"http", 80}, servicePort{"distributor-grpc", 9095})
+	resources = append(resources, o)
+
+	o = makeDeployment(req, cortex, "querier")
+	resources = append(resources, o)
+
+	o = makeService(req, "querier", servicePort{"http", 80}, servicePort{"querier-grpc", 9095})
 	resources = append(resources, o)
 
 	o = makeStatefulSetIngester(req, cortex)
@@ -294,10 +300,10 @@ func makeStatefulSetMemcached(req ctrl.Request, name string) *kubernetesResource
 	}
 }
 
-func makeDeploymentDistributor(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *kubernetesResource {
-	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "distributor", Namespace: req.Namespace}}
+func makeDeployment(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name string) *kubernetesResource {
+	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	labels := map[string]string{
-		"name":       "distributor",
+		"name":       name,
 		"memberlist": "gossip-ring",
 	}
 
@@ -309,14 +315,14 @@ func makeDeploymentDistributor(req ctrl.Request, cortex *cortexv1alpha1.Cortex) 
 				MatchLabels: labels,
 			}
 			deployment.Spec.Template.Labels = labels
-			deployment.Spec.Template.Spec.Affinity = WithPodAntiAffinity("distributor")
+			deployment.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
 			deployment.Spec.Template.Spec.Containers = []corev1.Container{
 				{
-					Name:            "distributor",
+					Name:            name,
 					Image:           cortex.Spec.Image,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Args: []string{
-						"-target=distributor",
+						"-target=" + name,
 						"-config.file=/etc/cortex/config.yaml",
 					},
 					Ports: []corev1.ContainerPort{
