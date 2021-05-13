@@ -141,6 +141,12 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeService(req, "querier", servicePort{"http", 80}, servicePort{"querier-grpc", 9095})
 	resources = append(resources, o)
 
+	o = makeDeployment(req, cortex, "query-frontend")
+	resources = append(resources, o)
+
+	o = makeService(req, "query-frontend", servicePort{"http", 80}, servicePort{"querier-grpc", 9095})
+	resources = append(resources, o)
+
 	o = makeStatefulSetIngester(req, cortex)
 	resources = append(resources, o)
 
