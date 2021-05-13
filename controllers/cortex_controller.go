@@ -96,6 +96,24 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeServiceAccount(req)
 	resources = append(resources, o)
 
+	o = makeHeadlessService(req, "memcached", "name", servicePort{"memcached-client", 11211})
+	resources = append(resources, o)
+
+	o = makeStatefulSetMemcached(req, "memcached")
+	resources = append(resources, o)
+
+	o = makeHeadlessService(req, "memcached-index-queries", "name", servicePort{"memcached-client", 11211})
+	resources = append(resources, o)
+
+	o = makeStatefulSetMemcached(req, "memcached-index-queries")
+	resources = append(resources, o)
+
+	o = makeHeadlessService(req, "memcached-index-writes", "name", servicePort{"memcached-client", 11211})
+	resources = append(resources, o)
+
+	o = makeStatefulSetMemcached(req, "memcached-index-writes")
+	resources = append(resources, o)
+
 	o = makeHeadlessService(req, "memcached-results", "name", servicePort{"memcached-client", 11211})
 	resources = append(resources, o)
 
