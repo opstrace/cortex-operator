@@ -497,7 +497,7 @@ func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *k
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"storage": resource.MustParse("30Gi"),
+								"storage": resource.MustParse("1Gi"),
 							},
 						},
 					},
@@ -585,7 +585,7 @@ func makeStatefulSetStoreGateway(req ctrl.Request, cortex *cortexv1alpha1.Cortex
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"storage": resource.MustParse("30Gi"),
+								"storage": resource.MustParse("1Gi"),
 							},
 						},
 					},
