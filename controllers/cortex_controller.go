@@ -141,10 +141,16 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeService(req, "ingester", servicePort{"http", 80}, servicePort{"ingester-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeStatefulSetStoreGateway(req, cortex)
+	o = makeStatefulSet(req, cortex, "store-gateway")
 	resources = append(resources, o)
 
 	o = makeService(req, "store-gateway", servicePort{"http", 80}, servicePort{"store-gateway-grpc", 9095})
+	resources = append(resources, o)
+
+	o = makeStatefulSet(req, cortex, "compactor")
+	resources = append(resources, o)
+
+	o = makeService(req, "compactor", servicePort{"http", 80}, servicePort{"compactor-grpc", 9095})
 	resources = append(resources, o)
 
 	for _, resource := range resources {
@@ -509,28 +515,28 @@ func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *k
 	}
 }
 
-func makeStatefulSetStoreGateway(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *kubernetesResource {
-	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: "store-gateway", Namespace: req.Namespace}}
+func makeStatefulSet(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name string) *kubernetesResource {
+	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 
 	return &kubernetesResource{
 		obj: statefulSet,
 		mutator: func() error {
-			statefulSet.Spec.ServiceName = "store-gateway"
+			statefulSet.Spec.ServiceName = name
 			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
 			statefulSet.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
 			statefulSet.Spec.Selector = &metav1.LabelSelector{
-				MatchLabels: map[string]string{"name": "store-gateway"},
+				MatchLabels: map[string]string{"name": name},
 			}
 			statefulSet.Spec.Template.ObjectMeta.Labels = map[string]string{
-				"name": "store-gateway",
+				"name": name,
 			}
-			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity("store-gateway")
+			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
 			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
 				{
-					Name:  "store-gateway",
+					Name:  name,
 					Image: cortex.Spec.Image,
 					Args: []string{
-						"-target=store-gateway",
+						"-target=" + name,
 						"-config.file=/etc/cortex/config.yaml",
 					},
 					ImagePullPolicy: corev1.PullIfNotPresent,
