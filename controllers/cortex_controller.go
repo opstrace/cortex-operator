@@ -86,10 +86,10 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	resources := make([]*kubernetesResource, 0)
 
-	o, err := makeCortexConfigMap(req)
+	o, err := makeCortexConfigMap(cortex)
 	if err != nil {
 		log.Error(err, "failed to generate cortex configmap, will not retry")
-		return ctrl.Result{Requeue: false}, err
+		return ctrl.Result{Requeue: false}, nil
 	}
 	resources = append(resources, o)
 
@@ -208,14 +208,7 @@ func (r *CortexReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func generateCortexConfig(req ctrl.Request) (string, error) {
-	// Anonymous struct with the fields required by the cortex config template
-	data := struct {
-		Namespace string
-	}{
-		req.Namespace,
-	}
-
+func generateCortexConfig(cortex *cortexv1alpha1.Cortex) (string, error) {
 	t := template.New("cortexConfig")
 
 	t, err := t.Parse(CortexConfigTemplate)
@@ -224,7 +217,7 @@ func generateCortexConfig(req ctrl.Request) (string, error) {
 	}
 
 	var b bytes.Buffer
-	err = t.Execute(&b, data)
+	err = t.Execute(&b, cortex)
 	if err != nil {
 		return "", err
 	}
@@ -232,13 +225,13 @@ func generateCortexConfig(req ctrl.Request) (string, error) {
 	return b.String(), nil
 }
 
-func makeCortexConfigMap(req ctrl.Request) (*kubernetesResource, error) {
-	configStr, err := generateCortexConfig(req)
+func makeCortexConfigMap(cortex *cortexv1alpha1.Cortex) (*kubernetesResource, error) {
+	configStr, err := generateCortexConfig(cortex)
 	if err != nil {
 		return nil, err
 	}
 
-	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cortex", Namespace: req.Namespace}}
+	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cortex", Namespace: cortex.Namespace}}
 
 	return &kubernetesResource{
 		obj: configMap,

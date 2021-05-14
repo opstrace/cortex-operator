@@ -4,3 +4,21 @@ metadata:
   name: cortex-sample
 spec:
   image: "cortexproject/cortex:master-23628b8"
+
+  blocks_storage:
+    backend: s3
+    s3:
+      bucket_name: sreis-test-cortex
+      endpoint: s3.us-east-2.amazonaws.com
+
+  ruler_storage:
+    backend: s3
+    s3:
+      bucket_name: sreis-test-cortex-config
+      endpoint: s3.us-east-2.amazonaws.com
+
+  alertmanager_storage:
+    backend: s3
+    s3:
+      bucket_name: sreis-test-cortex-config
+      endpoint: s3.us-east-2.amazonaws.com

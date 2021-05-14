@@ -78,11 +78,10 @@ blocks_storage:
     dir: /cortex/tsdb
     wal_compression_enabled: true
     retention_period: 6h
-  # TODO: configurable storage_config
-  backend: s3
+  backend: {{.Spec.BlocksStorage.Backend}}
   s3:
-     bucket_name: collection-cortex
-     endpoint: s3.us-west-2.amazonaws.com
+     bucket_name: {{.Spec.BlocksStorage.S3.BucketName}}
+     endpoint: {{.Spec.BlocksStorage.S3.Endpoint}}
   bucket_store:
     sync_dir: /cortex/tsdb-sync
     index_cache:
@@ -128,10 +127,10 @@ alertmanager:
       store: memberlist
   external_url: /alertmanager
 alertmanager_storage:
-  backend: s3
+  backend: {{.Spec.AlertManagerStorage.Backend}}
   s3:
-    bucket_name: collection-cortex-config
-    endpoint: s3.us-west-2.amazonaws.com
+    bucket_name: {{.Spec.AlertManagerStorage.S3.BucketName}}
+    endpoint: {{.Spec.AlertManagerStorage.S3.Endpoint}}
 ruler:
   enable_api: true
   enable_sharding: true
@@ -141,8 +140,8 @@ ruler:
      store: memberlist
   alertmanager_url: 'http://alertmanager.{{.Namespace}}.svc.cluster.local/alertmanager/'
 ruler_storage:
-  backend: s3
+  backend: {{.Spec.RulerStorage.Backend}}
   s3:
-    bucket_name: collection-cortex-config
-    endpoint: s3.us-west-2.amazonaws.com
+    bucket_name: {{.Spec.RulerStorage.S3.BucketName}}
+    endpoint: {{.Spec.RulerStorage.S3.Endpoint}}
 `

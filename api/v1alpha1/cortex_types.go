@@ -29,6 +29,28 @@ type CortexSpec struct {
 
 	// Image of Cortex to deploy.
 	Image string `json:"image,omitempty"`
+
+	// S3 Bucket configuration.
+	BlocksStorage       StorageConfig `json:"blocks_storage,omitempty"`
+	RulerStorage        StorageConfig `json:"ruler_storage,omitempty"`
+	AlertManagerStorage StorageConfig `json:"alertmanager_storage"`
+}
+
+type StorageConfig struct {
+	Backend string           `json:"backend,omitempty"`
+	S3      *StorageConfigS3 `json:"s3,omitempty"`
+	// GCS is not supported yet. This is here as a placeholder for now to see
+	// how the spec can look like.
+	GCS *StorageConfigGCS `json:"gcs,omitempty"`
+}
+
+type StorageConfigS3 struct {
+	BucketName string `json:"bucket_name,omitempty"`
+	Endpoint   string `json:"endpoint,omitempty"`
+}
+
+type StorageConfigGCS struct {
+	BucketName string `json:"bucket_name,omitempty"`
 }
 
 // CortexStatus defines the observed state of Cortex
