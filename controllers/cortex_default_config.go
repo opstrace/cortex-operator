@@ -20,7 +20,7 @@ const CortexConfigTemplate = `
 http_prefix: ''
 api:
   alertmanager_http_prefix: /alertmanager
-auth_enabled: true
+auth_enabled: false # true
 distributor:
   shard_by_all_labels: true
   pool:
