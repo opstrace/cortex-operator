@@ -309,7 +309,7 @@ func makeDeployment(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name string
 	return &kubernetesResource{
 		obj: deployment,
 		mutator: func() error {
-			deployment.Spec.Replicas = pointer.Int32Ptr(1)
+			deployment.Spec.Replicas = pointer.Int32Ptr(2)
 			deployment.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: labels,
 			}
@@ -422,7 +422,7 @@ func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *k
 		obj: statefulSet,
 		mutator: func() error {
 			statefulSet.Spec.ServiceName = "ingester"
-			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
+			statefulSet.Spec.Replicas = pointer.Int32Ptr(2)
 			statefulSet.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
 			statefulSet.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": "ingester"},
@@ -527,7 +527,7 @@ func makeStatefulSet(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name strin
 		obj: statefulSet,
 		mutator: func() error {
 			statefulSet.Spec.ServiceName = name
-			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
+			statefulSet.Spec.Replicas = pointer.Int32Ptr(2)
 			statefulSet.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
 			statefulSet.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": name},
