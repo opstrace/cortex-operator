@@ -19,6 +19,8 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 
@@ -52,6 +54,7 @@ type kubernetesResource struct {
 
 const FinalizerName = "cortex.opstrace.io/finalizer"
 const ServiceAccountName = "cortex"
+const CortexConfigShasumAnnotationName = "cortex-operator/cortex-config-shasum"
 
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices/status,verbs=get;update;patch
@@ -86,11 +89,13 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	resources := make([]*kubernetesResource, 0)
 
-	o, err := makeCortexConfigMap(cortex)
+	cortexConfigStr, cortexConfigSHA, err := generateCortexConfig(cortex)
 	if err != nil {
 		log.Error(err, "failed to generate cortex configmap, will not retry")
-		return ctrl.Result{Requeue: false}, nil
+		return ctrl.Result{Requeue: false}, err
 	}
+
+	o := makeCortexConfigMap(req, cortexConfigStr)
 	resources = append(resources, o)
 
 	o = makeServiceAccount(req)
@@ -129,37 +134,37 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeHeadlessService(req, "gossip-ring", "memberlist", servicePort{"gossip-ring", 7946})
 	resources = append(resources, o)
 
-	o = makeDeployment(req, cortex, "distributor")
+	o = makeDeployment(req, cortex, "distributor", cortexConfigSHA)
 	resources = append(resources, o)
 
 	o = makeService(req, "distributor", servicePort{"http", 80}, servicePort{"distributor-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeDeployment(req, cortex, "querier")
+	o = makeDeployment(req, cortex, "querier", cortexConfigSHA)
 	resources = append(resources, o)
 
 	o = makeService(req, "querier", servicePort{"http", 80}, servicePort{"querier-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeDeployment(req, cortex, "query-frontend")
+	o = makeDeployment(req, cortex, "query-frontend", cortexConfigSHA)
 	resources = append(resources, o)
 
 	o = makeService(req, "query-frontend", servicePort{"http", 80}, servicePort{"querier-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeStatefulSetIngester(req, cortex)
+	o = makeStatefulSetIngester(req, cortex, cortexConfigSHA)
 	resources = append(resources, o)
 
 	o = makeService(req, "ingester", servicePort{"http", 80}, servicePort{"ingester-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeStatefulSet(req, cortex, "store-gateway")
+	o = makeStatefulSet(req, cortex, "store-gateway", cortexConfigSHA)
 	resources = append(resources, o)
 
 	o = makeService(req, "store-gateway", servicePort{"http", 80}, servicePort{"store-gateway-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeStatefulSet(req, cortex, "compactor")
+	o = makeStatefulSet(req, cortex, "compactor", cortexConfigSHA)
 	resources = append(resources, o)
 
 	o = makeService(req, "compactor", servicePort{"http", 80}, servicePort{"compactor-grpc", 9095})
@@ -208,40 +213,41 @@ func (r *CortexReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func generateCortexConfig(cortex *cortexv1alpha1.Cortex) (string, error) {
+// generateCortexConfig returns a config yaml and the shasum of it or an error
+// when templating the given cortex spec to yaml config accepted by cortex
+// components.
+func generateCortexConfig(cortex *cortexv1alpha1.Cortex) (string, string, error) {
 	t := template.New("cortexConfig")
 
 	t, err := t.Parse(CortexConfigTemplate)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	var b bytes.Buffer
 	err = t.Execute(&b, cortex)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return b.String(), nil
+	sha := sha256.Sum256(b.Bytes())
+	s := hex.EncodeToString(sha[:])
+
+	return b.String(), s, nil
 }
 
-func makeCortexConfigMap(cortex *cortexv1alpha1.Cortex) (*kubernetesResource, error) {
-	configStr, err := generateCortexConfig(cortex)
-	if err != nil {
-		return nil, err
-	}
-
-	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cortex", Namespace: cortex.Namespace}}
+func makeCortexConfigMap(req ctrl.Request, cortexConfigStr string) *kubernetesResource {
+	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cortex", Namespace: req.Namespace}}
 
 	return &kubernetesResource{
 		obj: configMap,
 		mutator: func() error {
 			configMap.Data = map[string]string{
-				"config.yaml": string(configStr),
+				"config.yaml": string(cortexConfigStr),
 			}
 			return nil
 		},
-	}, nil
+	}
 }
 
 func makeServiceAccount(req ctrl.Request) *kubernetesResource {
@@ -299,11 +305,19 @@ func makeStatefulSetMemcached(req ctrl.Request, name string) *kubernetesResource
 	}
 }
 
-func makeDeployment(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name string) *kubernetesResource {
+func makeDeployment(
+	req ctrl.Request,
+	cortex *cortexv1alpha1.Cortex,
+	name string,
+	cortexConfigSHA string,
+) *kubernetesResource {
 	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	labels := map[string]string{
 		"name":       name,
 		"memberlist": "gossip-ring",
+	}
+	annotations := map[string]string{
+		CortexConfigShasumAnnotationName: cortexConfigSHA,
 	}
 
 	return &kubernetesResource{
@@ -314,6 +328,7 @@ func makeDeployment(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name string
 				MatchLabels: labels,
 			}
 			deployment.Spec.Template.Labels = labels
+			deployment.Spec.Template.Annotations = annotations
 			deployment.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
 			deployment.Spec.Template.Spec.Containers = []corev1.Container{
 				{
@@ -415,8 +430,18 @@ func makeService(req ctrl.Request, name string, servicePorts ...servicePort) *ku
 	}
 }
 
-func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *kubernetesResource {
+func makeStatefulSetIngester(
+	req ctrl.Request,
+	cortex *cortexv1alpha1.Cortex,
+	cortexConfigSHA string,
+) *kubernetesResource {
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: "ingester", Namespace: req.Namespace}}
+	labels := map[string]string{
+		"name": "ingester",
+	}
+	annotations := map[string]string{
+		CortexConfigShasumAnnotationName: cortexConfigSHA,
+	}
 
 	return &kubernetesResource{
 		obj: statefulSet,
@@ -427,9 +452,8 @@ func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *k
 			statefulSet.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": "ingester"},
 			}
-			statefulSet.Spec.Template.ObjectMeta.Labels = map[string]string{
-				"name": "ingester",
-			}
+			statefulSet.Spec.Template.Labels = labels
+			statefulSet.Spec.Template.Annotations = annotations
 			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity("ingester")
 			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
 				{
@@ -520,9 +544,19 @@ func makeStatefulSetIngester(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *k
 	}
 }
 
-func makeStatefulSet(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name string) *kubernetesResource {
+func makeStatefulSet(
+	req ctrl.Request,
+	cortex *cortexv1alpha1.Cortex,
+	name string,
+	cortexConfigSHA string,
+) *kubernetesResource {
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-
+	labels := map[string]string{
+		"name": name,
+	}
+	annotations := map[string]string{
+		CortexConfigShasumAnnotationName: cortexConfigSHA,
+	}
 	return &kubernetesResource{
 		obj: statefulSet,
 		mutator: func() error {
@@ -532,9 +566,8 @@ func makeStatefulSet(req ctrl.Request, cortex *cortexv1alpha1.Cortex, name strin
 			statefulSet.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": name},
 			}
-			statefulSet.Spec.Template.ObjectMeta.Labels = map[string]string{
-				"name": name,
-			}
+			statefulSet.Spec.Template.Labels = labels
+			statefulSet.Spec.Template.Annotations = annotations
 			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
 			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
 				{
