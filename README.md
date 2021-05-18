@@ -1,6 +1,6 @@
 # cortex-operator
 
-The cortex-operator is a project to manage the lifecycle of Cortex in Kubernetes.
+The cortex-operator is a project to manage the lifecycle of [Cortex](https://cortexmetrics.io/) in Kubernetes.
 
 ## Requirements
 
@@ -10,7 +10,8 @@ The cortex-operator is a project to manage the lifecycle of Cortex in Kubernetes
 - Kubectl
 
 ### Run
-- Kubernetes cluster 1.18+
+
+- [EKS](https://aws.amazon.com/eks/) or [GKE](https://cloud.google.com/kubernetes-engine) Kubernetes cluster 1.18+
 
 ## Installation
 
