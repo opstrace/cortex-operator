@@ -92,7 +92,7 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	cortexConfigStr, cortexConfigSHA, err := generateCortexConfig(cortex)
 	if err != nil {
 		log.Error(err, "failed to generate cortex configmap, will not retry")
-		return ctrl.Result{Requeue: false}, err
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	o := makeCortexConfigMap(req, cortexConfigStr)
