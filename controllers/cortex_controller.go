@@ -55,6 +55,7 @@ type kubernetesResource struct {
 const FinalizerName = "cortex.opstrace.io/finalizer"
 const ServiceAccountName = "cortex"
 const CortexConfigShasumAnnotationName = "cortex-operator/cortex-config-shasum"
+const CortexConfigMapName = "cortex"
 
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices/status,verbs=get;update;patch
@@ -237,7 +238,7 @@ func generateCortexConfig(cortex *cortexv1alpha1.Cortex) (string, string, error)
 }
 
 func makeCortexConfigMap(req ctrl.Request, cortexConfigStr string) *kubernetesResource {
-	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cortex", Namespace: req.Namespace}}
+	configMap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: CortexConfigMapName, Namespace: req.Namespace}}
 
 	return &kubernetesResource{
 		obj: configMap,
