@@ -49,6 +49,7 @@ make uninstall
 
 ## Roadmap
 
+- Webhook validation of Cortex configuration
 - Deploy Cortex in different topologies
 - Automate moving workloads to other instance
 - Auto-scaling of services
