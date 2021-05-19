@@ -3,22 +3,22 @@ kind: Cortex
 metadata:
   name: cortex-sample
 spec:
-  image: "cortexproject/cortex:master-23628b8"
+  image: "cortexproject/cortex:v1.9.0"
 
   blocks_storage:
     backend: s3
     s3:
-      bucket_name: sreis-test-cortex
-      endpoint: s3.us-east-2.amazonaws.com
+      bucket_name: cortex-operator-example-209f-data
+      endpoint: s3.us-west-2.amazonaws.com
 
   ruler_storage:
     backend: s3
     s3:
-      bucket_name: sreis-test-cortex-config
-      endpoint: s3.us-east-2.amazonaws.com
+      bucket_name: cortex-operator-example-209f-config
+      endpoint: s3.us-west-2.amazonaws.com
 
   alertmanager_storage:
     backend: s3
     s3:
-      bucket_name: sreis-test-cortex-config
-      endpoint: s3.us-east-2.amazonaws.com
+      bucket_name: cortex-operator-example-209f-config
+      endpoint: s3.us-west-2.amazonaws.com
