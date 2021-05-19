@@ -23,3 +23,11 @@ testbin/*
 *.swp
 *.swo
 *~
+
+# terraform files
+docs/guides/terraform/.terraform.*
+docs/guides/terraform/.terraform/
+docs/guides/terraform/terraform.tfstate
+docs/guides/terraform/terraform.tfstate.backup
+docs/guides/terraform/kubeconfig
+
