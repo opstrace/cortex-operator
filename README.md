@@ -2,6 +2,8 @@
 
 The cortex-operator is a project to manage the lifecycle of [Cortex](https://cortexmetrics.io/) in Kubernetes.
 
+**Project status: alpha** Not all planned features are completed. The API, spec, status and other user facing objects will, most likely, change. *Don't use it in production.*
+
 ## Requirements
 
 ### Build
