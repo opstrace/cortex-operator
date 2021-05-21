@@ -1,0 +1,19 @@
+env:
+  CHECKOUT_VERSION_STRING: "${BUILDKITE_COMMIT:0:8}-ci"
+steps:
+  - label: "preamble"
+    key: "preamble"
+    command:
+      - make build-ci-image
+  - label: "lint, build"
+    key: "build"
+    depends_on:
+      - "preamble"
+    command:
+      - make ci-build
+  - label: "test"
+    key: "test"
+    depends_on:
+      - "build"
+    command:
+      - make ci-test

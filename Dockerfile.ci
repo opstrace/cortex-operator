@@ -1,0 +1,21 @@
+FROM golang:1.15 as builder
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+# cache deps before building and copying source so that we don't need to
+# re-download as much and so that source changes don't invalidate our downloaded
+# layer
+RUN go mod download
+
+# Install tools required to run tests
+COPY hack/ hack/
+COPY Makefile Makefile
+
+ENV CI=true
+
+RUN mkdir -p /local/bin && make controller-gen kustomize envtest
+
+# Skip fetching and untaring the tools by setting the SKIP_FETCH_TOOLS variable.
+ENV SKIP_FETCH_TOOLS=true
