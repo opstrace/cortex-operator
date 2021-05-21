@@ -17,6 +17,12 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+ifeq ($(CI),true)
+BASEDIR=/local
+else
+BASEDIR=$(shell pwd)
+endif
+
 all: build
 
 ##@ General
@@ -49,11 +55,14 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: manifests generate fmt vet ## Run tests.
+ENVTEST_ASSETS_DIR=$(BASEDIR)/testbin
+test: envtest manifests generate fmt vet ## Run tests.
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh;  setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+
+envtest:
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.2/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR);
 
 ##@ Build
 
@@ -63,7 +72,7 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: test ## Build docker image with the manager.
+docker-build: ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 docker-push: ## Push docker image with the manager.
@@ -85,16 +94,15 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+CONTROLLER_GEN = $(BASEDIR)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
+KUSTOMIZE = $(BASEDIR)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
@@ -102,7 +110,36 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(BASEDIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
+
+##@ CI
+
+OS := $(shell uname -s)
+
+#
+# CI specific targets are only tested to run on Linux
+#
+ifeq ($(OS),Linux)
+
+CI_IMG_TAG ?= $(shell sha1sum Dockerfile.ci | awk '{ print $$1 }')
+CI_IMG ?= opstrace/cortex-operator-ci:$(CI_IMG_TAG)
+
+build-ci-image: ## Build docker image to run in CI.
+	DOCKER_BUILDKIT=1 docker build --ssh default -f Dockerfile.ci --tag $(CI_IMG) .
+
+pull-ci-image: ## Pull CI docker Image.
+	docker pull $(CI_IMG)
+
+push-ci-image: ## Push CI docker image.
+	docker push $(CI_IMG)
+
+ci-%: ## `make ci-<TARGET>` will run the Makefile target <TARGET> in the CI docker Image.
+	docker run --rm -ti \
+	-v $(shell pwd):/workspace \
+	-w /workspace \
+	$(CI_IMG) make $*
+
+endif
