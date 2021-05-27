@@ -13,4 +13,8 @@ resources:
   kind: Cortex
   path: github.com/opstrace/cortex-operator/api/v1alpha1
   version: v1alpha1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1beta1
 version: "3"
