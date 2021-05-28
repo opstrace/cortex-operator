@@ -37,7 +37,6 @@ var _ = Describe("Cortex validation webhook", func() {
 	It("should validate sample", func() {
 		manifest := filepath.Join("..", "..", "config", "samples", "cortex_v1alpha1_cortex.yaml")
 		c := GetCortexTestSample(manifest)
-		// err := c.ValidateCreate()
 		err := k8sClient.Create(context.Background(), c)
 		Expect(err).ToNot(HaveOccurred())
 	})

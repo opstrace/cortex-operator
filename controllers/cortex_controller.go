@@ -17,12 +17,10 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"html/template"
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -36,6 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 
 	cortexv1alpha1 "github.com/opstrace/cortex-operator/api/v1alpha1"
 )
@@ -218,23 +217,15 @@ func (r *CortexReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // when templating the given cortex spec to yaml config accepted by cortex
 // components.
 func generateCortexConfig(cortex *cortexv1alpha1.Cortex) (string, string, error) {
-	t := template.New("cortexConfig")
-
-	t, err := t.Parse(CortexConfigTemplate)
-	if err != nil {
-		return "", "", err
-	}
-
-	var b bytes.Buffer
-	err = t.Execute(&b, cortex)
-	if err != nil {
-		return "", "", err
-	}
-
-	sha := sha256.Sum256(b.Bytes())
+	sha := sha256.Sum256(cortex.Spec.Config.Raw)
 	s := hex.EncodeToString(sha[:])
 
-	return b.String(), s, nil
+	y, err := yaml.JSONToYAML(cortex.Spec.Config.Raw)
+	if err != nil {
+		return "", "", err
+	}
+
+	return string(y), s, nil
 }
 
 func makeCortexConfigMap(req ctrl.Request, cortexConfigStr string) *kubernetesResource {
