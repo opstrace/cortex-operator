@@ -3,3 +3,6 @@
 !**/*.go
 !**/*.mod
 !**/*.sum
+testbin/
+docs/
+bin/
