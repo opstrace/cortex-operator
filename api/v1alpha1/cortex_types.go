@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -30,27 +31,10 @@ type CortexSpec struct {
 	// Image of Cortex to deploy.
 	Image string `json:"image,omitempty"`
 
-	// S3 Bucket configuration.
-	BlocksStorage       StorageConfig `json:"blocks_storage,omitempty"`
-	RulerStorage        StorageConfig `json:"ruler_storage,omitempty"`
-	AlertManagerStorage StorageConfig `json:"alertmanager_storage"`
-}
-
-type StorageConfig struct {
-	Backend string           `json:"backend,omitempty"`
-	S3      *StorageConfigS3 `json:"s3,omitempty"`
-	// GCS is not supported yet. This is here as a placeholder for now to see
-	// how the spec can look like.
-	GCS *StorageConfigGCS `json:"gcs,omitempty"`
-}
-
-type StorageConfigS3 struct {
-	BucketName string `json:"bucket_name,omitempty"`
-	Endpoint   string `json:"endpoint,omitempty"`
-}
-
-type StorageConfigGCS struct {
-	BucketName string `json:"bucket_name,omitempty"`
+	// Config accepts any object, meaning it accepts any valid Cortex config
+	// yaml. Defaulting and Validation are done in the webhooks.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config runtime.RawExtension `json:"config,omitempty"`
 }
 
 // CortexStatus defines the observed state of Cortex
