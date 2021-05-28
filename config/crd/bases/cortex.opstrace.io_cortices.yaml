@@ -36,69 +36,14 @@ spec:
           spec:
             description: CortexSpec defines the desired state of Cortex
             properties:
-              alertmanager_storage:
-                properties:
-                  backend:
-                    type: string
-                  gcs:
-                    description: GCS is not supported yet. This is here as a placeholder
-                      for now to see how the spec can look like.
-                    properties:
-                      bucket_name:
-                        type: string
-                    type: object
-                  s3:
-                    properties:
-                      bucket_name:
-                        type: string
-                      endpoint:
-                        type: string
-                    type: object
+              config:
+                description: Config accepts any object, meaning it accepts any valid
+                  Cortex config yaml. Defaulting and Validation are done in the webhooks.
                 type: object
-              blocks_storage:
-                description: S3 Bucket configuration.
-                properties:
-                  backend:
-                    type: string
-                  gcs:
-                    description: GCS is not supported yet. This is here as a placeholder
-                      for now to see how the spec can look like.
-                    properties:
-                      bucket_name:
-                        type: string
-                    type: object
-                  s3:
-                    properties:
-                      bucket_name:
-                        type: string
-                      endpoint:
-                        type: string
-                    type: object
-                type: object
+                x-kubernetes-preserve-unknown-fields: true
               image:
                 description: Image of Cortex to deploy.
                 type: string
-              ruler_storage:
-                properties:
-                  backend:
-                    type: string
-                  gcs:
-                    description: GCS is not supported yet. This is here as a placeholder
-                      for now to see how the spec can look like.
-                    properties:
-                      bucket_name:
-                        type: string
-                    type: object
-                  s3:
-                    properties:
-                      bucket_name:
-                        type: string
-                      endpoint:
-                        type: string
-                    type: object
-                type: object
-            required:
-            - alertmanager_storage
             type: object
           status:
             description: CortexStatus defines the observed state of Cortex

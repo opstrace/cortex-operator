@@ -17,16 +17,21 @@
 package v1alpha1
 
 import (
+	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/cortexproject/cortex/pkg/cortex"
+	"github.com/cortexproject/cortex/pkg/util/flagext"
 )
 
 // log is for logging in this package.
 var cortexlog = logf.Log.WithName("cortex-resource")
 
 func (r *Cortex) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	cortexlog.Info("webhook manager set up")
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -54,8 +59,15 @@ var _ webhook.Validator = &Cortex{}
 func (r *Cortex) ValidateCreate() error {
 	cortexlog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
-	return nil
+	cfg := &cortex.Config{}
+	flagext.DefaultValues(cfg)
+
+	err := yaml.UnmarshalStrict(r.Spec.Config.Raw, cfg)
+	if err != nil {
+		return err
+	}
+
+	return cfg.Validate(nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
