@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/cortexproject/cortex v1.9.0
 	github.com/go-logr/logr v0.4.0
+	github.com/miracl/conflate v1.2.1
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	gopkg.in/yaml.v2 v2.4.0
@@ -13,6 +14,7 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 	sigs.k8s.io/controller-runtime v0.7.2
+	sigs.k8s.io/yaml v1.2.0
 )
 
 // Override since git.apache.org is down.  The docs say to fetch from github.
