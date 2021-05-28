@@ -102,6 +102,18 @@ KUSTOMIZE = $(BASEDIR)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
+##@ Kind Deployment
+kind: ## Create a kind cluster and install cert-manager.
+	kind create cluster
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+
+kind-deploy: manifests kustomize docker-build kind-load-image deploy ## Deploy to kind cluster.
+
+kind-undeploy: undeploy ## Undeploy from kind cluster.
+
+kind-load-image: ## Load docker image to kind cluster.
+	kind load docker-image ${IMG}
+
 # go-get-tool will 'go get' any package $2 and install it to $1.
 define go-get-tool
 @[ -f $(1) ] || { \
