@@ -20,11 +20,13 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -86,8 +88,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// o = makeStatefulSetMemcached(req, "memcached")
-	// resources = append(resources, o)
+	sts := NewMemcachedStatefulset(req, "memcached")
+	cortex.Status.MemcachedRef.MemcachedSts = sts.ref
+	err = krr.Reconcile(ctx, sts)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	svc = NewMemcachedService(req, "memcached-index-queries")
 	cortex.Status.MemcachedRef.MemcachedIndexQueriesSvc = svc.ref
@@ -96,11 +102,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// o = makeStatefulSetMemcached(req, "memcached-index-queries")
-	// resources = append(resources, o)
+	sts = NewMemcachedStatefulset(req, "memcached-index-queries")
+	cortex.Status.MemcachedRef.MemcachedIndexQueriesSts = sts.ref
+	err = krr.Reconcile(ctx, sts)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	// o = makeHeadlessService(req, "memcached-index-writes", "name", servicePort{"memcached-client", 11211})
-	// resources = append(resources, o)
 	svc = NewMemcachedService(req, "memcached-index-writes")
 	cortex.Status.MemcachedRef.MemcachedIndexWritesSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
@@ -108,11 +116,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// o = makeStatefulSetMemcached(req, "memcached-index-writes")
-	// resources = append(resources, o)
+	sts = NewMemcachedStatefulset(req, "memcached-index-writes")
+	cortex.Status.MemcachedRef.MemcachedIndexWritesSts = sts.ref
+	err = krr.Reconcile(ctx, sts)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	// o = makeHeadlessService(req, "memcached-results", "name", servicePort{"memcached-client", 11211})
-	// resources = append(resources, o)
 	svc = NewMemcachedService(req, "memcached-results")
 	cortex.Status.MemcachedRef.MemcachedResultsSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
@@ -120,11 +130,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// o = makeStatefulSetMemcached(req, "memcached-results")
-	// resources = append(resources, o)
+	sts = NewMemcachedStatefulset(req, "memcached-results")
+	cortex.Status.MemcachedRef.MemcachedResultsSts = sts.ref
+	err = krr.Reconcile(ctx, sts)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	// o = makeHeadlessService(req, "memcached-metadata", "name", servicePort{"memcached-client", 11211})
-	// resources = append(resources, o)
 	svc = NewMemcachedService(req, "memcached-metadata")
 	cortex.Status.MemcachedRef.MemcachedMetadataSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
@@ -132,8 +144,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// o = makeStatefulSetMemcached(req, "memcached-metadata")
-	// resources = append(resources, o)
+	sts = NewMemcachedStatefulset(req, "memcached-metadata")
+	cortex.Status.MemcachedRef.MemcachedMetadataSts = sts.ref
+	err = krr.Reconcile(ctx, sts)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -227,6 +243,52 @@ func NewMemcachedService(req ctrl.Request, name string) *KubernetesResource {
 				},
 			}
 			svc.Spec.Selector = map[string]string{"name": name}
+
+			return nil
+		},
+	}
+}
+
+func NewMemcachedStatefulset(req ctrl.Request, name string) *KubernetesResource {
+	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
+	ref := &corev1.LocalObjectReference{Name: name}
+
+	return &KubernetesResource{
+		obj: statefulSet,
+		ref: ref,
+		mutator: func() error {
+			statefulSet.Spec.ServiceName = name
+			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
+			statefulSet.Spec.PodManagementPolicy = appsv1.ParallelPodManagement
+			statefulSet.Spec.Selector = &metav1.LabelSelector{
+				MatchLabels: map[string]string{"name": name},
+			}
+			statefulSet.Spec.Template.ObjectMeta.Labels = map[string]string{
+				"name": name,
+			}
+			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
+			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name:  "memcached",
+					Image: "memcached:1.6.9-alpine",
+					Args: []string{
+						"-m 4096",
+						"-I 2m",
+						"-c 1024",
+						"-v",
+					},
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "client",
+							ContainerPort: 11211,
+						},
+					},
+				},
+			}
+			statefulSet.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
+				Type: appsv1.RollingUpdateStatefulSetStrategyType,
+			}
 
 			return nil
 		},

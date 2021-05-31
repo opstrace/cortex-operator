@@ -228,50 +228,6 @@ func makeServiceAccount(req ctrl.Request) *kubernetesResource {
 	}
 }
 
-func makeStatefulSetMemcached(req ctrl.Request, name string) *kubernetesResource {
-	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-
-	return &kubernetesResource{
-		obj: statefulSet,
-		mutator: func() error {
-			statefulSet.Spec.ServiceName = name
-			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
-			statefulSet.Spec.PodManagementPolicy = appsv1.ParallelPodManagement
-			statefulSet.Spec.Selector = &metav1.LabelSelector{
-				MatchLabels: map[string]string{"name": name},
-			}
-			statefulSet.Spec.Template.ObjectMeta.Labels = map[string]string{
-				"name": name,
-			}
-			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
-			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
-				{
-					Name:  "memcached",
-					Image: "memcached:1.6.9-alpine",
-					Args: []string{
-						"-m 4096",
-						"-I 2m",
-						"-c 1024",
-						"-v",
-					},
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "client",
-							ContainerPort: 11211,
-						},
-					},
-				},
-			}
-			statefulSet.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
-				Type: appsv1.RollingUpdateStatefulSetStrategyType,
-			}
-
-			return nil
-		},
-	}
-}
-
 func makeDeployment(
 	req ctrl.Request,
 	cortex *cortexv1alpha1.Cortex,
