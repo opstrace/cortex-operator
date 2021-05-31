@@ -51,8 +51,9 @@ type CortexStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	MemcachedRef *MemcachedReference `json:"memcached,omitempty"`
-	IngesterRef  *IngesterReference  `json:"ingester,omitempty"`
+	MemcachedRef   *MemcachedReference   `json:"memcached,omitempty"`
+	IngesterRef    *IngesterReference    `json:"ingester,omitempty"`
+	DistributorRef *DistributorReference `json:"distributor,omitempty"`
 }
 
 // MemcachedReference holds references to all the Memcached resources
@@ -84,6 +85,13 @@ func (r *MemcachedReference) IsSet() bool {
 type IngesterReference struct {
 	Svc *corev1.LocalObjectReference `json:"ingester_svc,omitempty"`
 	Sts *corev1.LocalObjectReference `json:"ingester_sts,omitempty"`
+}
+
+// DistributorReference holds references to the Service and Deployment required to
+// run the Distributors
+type DistributorReference struct {
+	Svc    *corev1.LocalObjectReference `json:"distributor_svc,omitempty"`
+	Deploy *corev1.LocalObjectReference `json:"distributor_deploy,omitempty"`
 }
 
 //+kubebuilder:object:root=true

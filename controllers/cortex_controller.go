@@ -109,12 +109,6 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeHeadlessService(req, "gossip-ring", "memberlist", servicePort{"gossip-ring", 7946})
 	resources = append(resources, o)
 
-	o = makeDeployment(req, cortex, "distributor", cortexConfigSHA)
-	resources = append(resources, o)
-
-	o = makeService(req, "distributor", servicePort{"http", 80}, servicePort{"distributor-grpc", 9095})
-	resources = append(resources, o)
-
 	o = makeDeployment(req, cortex, "querier", cortexConfigSHA)
 	resources = append(resources, o)
 

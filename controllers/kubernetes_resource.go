@@ -46,7 +46,7 @@ func (krr *KubernetesResourceReconciler) Reconcile(
 	r *KubernetesResource,
 ) error {
 	// Set up garbage collection. The object (resource.obj) will be
-	// automatically deleted whent he owner (cortex) is deleted.
+	// automatically deleted when he owner (cortex) is deleted.
 	err := controllerutil.SetOwnerReference(krr.cortex, r.obj, krr.scheme)
 	if err != nil {
 		krr.log.Error(
