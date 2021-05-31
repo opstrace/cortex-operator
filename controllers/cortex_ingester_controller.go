@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -105,37 +104,6 @@ func (r *CortexIngesterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cortexv1alpha1.Cortex{}).
 		Complete(r)
-}
-
-func NewService(req ctrl.Request, name string) *KubernetesResource {
-	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-	ref := &corev1.LocalObjectReference{Name: name}
-	return &KubernetesResource{
-		obj: svc,
-		ref: ref,
-		mutator: func() error {
-			svc.Labels = map[string]string{
-				"name": name,
-				"job":  fmt.Sprintf("%s.%s", req.Namespace, name),
-			}
-			svc.Spec.Ports = make([]corev1.ServicePort, 0)
-			svc.Spec.Ports = []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       80,
-					TargetPort: intstr.FromInt(80),
-				},
-				{
-					Name:       "grpc",
-					Port:       9095,
-					TargetPort: intstr.FromInt(9095),
-				},
-			}
-			svc.Spec.Selector = map[string]string{"name": name}
-
-			return nil
-		},
-	}
 }
 
 func NewIngesterStatefulset(

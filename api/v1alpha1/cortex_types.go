@@ -54,6 +54,7 @@ type CortexStatus struct {
 	MemcachedRef   *MemcachedReference   `json:"memcached,omitempty"`
 	IngesterRef    *IngesterReference    `json:"ingester,omitempty"`
 	DistributorRef *DistributorReference `json:"distributor,omitempty"`
+	QuerierRef     *QuerierReference     `json:"querier,omitempty"`
 }
 
 // MemcachedReference holds references to all the Memcached resources
@@ -92,6 +93,13 @@ type IngesterReference struct {
 type DistributorReference struct {
 	Svc    *corev1.LocalObjectReference `json:"distributor_svc,omitempty"`
 	Deploy *corev1.LocalObjectReference `json:"distributor_deploy,omitempty"`
+}
+
+// QuerierReference holds references to the Service and Deployment required to
+// run the Queriers
+type QuerierReference struct {
+	Svc    *corev1.LocalObjectReference `json:"querier_svc,omitempty"`
+	Deploy *corev1.LocalObjectReference `json:"querier_deploy,omitempty"`
 }
 
 //+kubebuilder:object:root=true
