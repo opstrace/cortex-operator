@@ -33,7 +33,8 @@ import (
 	cortexv1alpha1 "github.com/opstrace/cortex-operator/api/v1alpha1"
 )
 
-// CortexReconciler reconciles a Cortex object
+// MemacachedReconciler reconciles a Cortex object and ensures all Memcached
+// resources are deployed
 type MemcachedReconciler struct {
 	client.Client
 	Log    logr.Logger

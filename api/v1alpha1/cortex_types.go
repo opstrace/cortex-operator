@@ -17,6 +17,9 @@
 package v1alpha1
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,15 +41,21 @@ type CortexSpec struct {
 	Config runtime.RawExtension `json:"config,omitempty"`
 }
 
+func (c *CortexSpec) ConfigSHA() string {
+	sha := sha256.Sum256(c.Config.Raw)
+	return hex.EncodeToString(sha[:])
+}
+
 // CortexStatus defines the observed state of Cortex
 type CortexStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	MemcachedRef *MemcachedReference `json:"memcached,omitempty"`
+	IngesterRef  *IngesterReference  `json:"ingester,omitempty"`
 }
 
-// MemcachedReference holds references to all the Memcached resources.
+// MemcachedReference holds references to all the Memcached resources
 type MemcachedReference struct {
 	MemcachedSvc             *corev1.LocalObjectReference `json:"memcached_svc,omitempty"`
 	MemcachedSts             *corev1.LocalObjectReference `json:"memcached_sts,omitempty"`
@@ -60,7 +69,7 @@ type MemcachedReference struct {
 	MemcachedMetadataSts     *corev1.LocalObjectReference `json:"memcached_metadata_sts,omitempty"`
 }
 
-// IsSet returns true if all the resource references are not nil.
+// IsSet returns true if all the resource references are not nil
 func (r *MemcachedReference) IsSet() bool {
 	return r != nil &&
 		r.MemcachedSvc != nil && r.MemcachedSts != nil &&
@@ -68,6 +77,13 @@ func (r *MemcachedReference) IsSet() bool {
 		r.MemcachedIndexWritesSvc != nil && r.MemcachedIndexWritesSts != nil &&
 		r.MemcachedResultsSvc != nil && r.MemcachedResultsSts != nil &&
 		r.MemcachedMetadataSvc != nil && r.MemcachedMetadataSts != nil
+}
+
+// IngesterReference holds references to the Service and Statefulset required to
+// run the Ingesters
+type IngesterReference struct {
+	Svc *corev1.LocalObjectReference `json:"ingester_svc,omitempty"`
+	Sts *corev1.LocalObjectReference `json:"ingester_sts,omitempty"`
 }
 
 //+kubebuilder:object:root=true
