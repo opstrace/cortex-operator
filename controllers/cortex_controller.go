@@ -26,7 +26,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -89,7 +88,7 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	resources := make([]*kubernetesResource, 0)
 
-	cortexConfigStr, cortexConfigSHA, err := generateCortexConfig(cortex)
+	cortexConfigStr, _, err := generateCortexConfig(cortex)
 	if err != nil {
 		log.Error(err, "failed to generate cortex configmap, will not retry")
 		return ctrl.Result{Requeue: false}, nil
@@ -109,17 +108,11 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeHeadlessService(req, "gossip-ring", "memberlist", servicePort{"gossip-ring", 7946})
 	resources = append(resources, o)
 
-	o = makeStatefulSet(req, cortex, "store-gateway", cortexConfigSHA)
-	resources = append(resources, o)
+	// o = makeStatefulSet(req, cortex, "store-gateway", cortexConfigSHA)
+	// resources = append(resources, o)
 
-	o = makeService(req, "store-gateway", servicePort{"http", 80}, servicePort{"store-gateway-grpc", 9095})
-	resources = append(resources, o)
-
-	o = makeStatefulSet(req, cortex, "compactor", cortexConfigSHA)
-	resources = append(resources, o)
-
-	o = makeService(req, "compactor", servicePort{"http", 80}, servicePort{"compactor-grpc", 9095})
-	resources = append(resources, o)
+	// o = makeService(req, "store-gateway", servicePort{"http", 80}, servicePort{"store-gateway-grpc", 9095})
+	// resources = append(resources, o)
 
 	for _, resource := range resources {
 		// Set up garbage collection. The object (resource.obj) will be
@@ -323,103 +316,6 @@ func makeService(req ctrl.Request, name string, servicePorts ...servicePort) *ku
 				})
 			}
 			service.Spec.Selector = map[string]string{"name": name}
-
-			return nil
-		},
-	}
-}
-
-func makeStatefulSet(
-	req ctrl.Request,
-	cortex *cortexv1alpha1.Cortex,
-	name string,
-	cortexConfigSHA string,
-) *kubernetesResource {
-	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-	labels := map[string]string{
-		"name": name,
-	}
-	annotations := map[string]string{
-		CortexConfigShasumAnnotationName: cortexConfigSHA,
-	}
-	return &kubernetesResource{
-		obj: statefulSet,
-		mutator: func() error {
-			statefulSet.Spec.ServiceName = name
-			statefulSet.Spec.Replicas = pointer.Int32Ptr(2)
-			statefulSet.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
-			statefulSet.Spec.Selector = &metav1.LabelSelector{
-				MatchLabels: map[string]string{"name": name},
-			}
-			statefulSet.Spec.Template.Labels = labels
-			statefulSet.Spec.Template.Annotations = annotations
-			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
-			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
-				{
-					Name:  name,
-					Image: cortex.Spec.Image,
-					Args: []string{
-						"-target=" + name,
-						"-config.file=/etc/cortex/config.yaml",
-					},
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "http",
-							ContainerPort: 80,
-						},
-						{
-							Name:          "grpc",
-							ContainerPort: 9095,
-						},
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							MountPath: "/etc/cortex",
-							Name:      "cortex",
-						},
-						{
-							Name:      "datadir",
-							MountPath: "/cortex",
-						},
-					},
-				},
-			}
-			statefulSet.Spec.Template.Spec.ServiceAccountName = ServiceAccountName
-			statefulSet.Spec.Template.Spec.Volumes = []corev1.Volume{
-				{
-					Name: "cortex",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "cortex",
-							},
-						},
-					},
-				},
-				{
-					Name: "datadir",
-					VolumeSource: corev1.VolumeSource{
-						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: "datadir",
-						},
-					},
-				},
-			}
-			statefulSet.Spec.VolumeClaimTemplates = []corev1.PersistentVolumeClaim{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "datadir"},
-					Spec: corev1.PersistentVolumeClaimSpec{
-						// Uses the default storage class.
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								"storage": resource.MustParse("1Gi"),
-							},
-						},
-					},
-				},
-			}
 
 			return nil
 		},

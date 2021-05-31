@@ -23,6 +23,7 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -187,6 +188,105 @@ func NewDeployment(
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
 								Name: "cortex",
+							},
+						},
+					},
+				},
+			}
+
+			return nil
+		},
+	}
+}
+
+func NewStatefulset(
+	req ctrl.Request,
+	name string,
+	cortex *cortexv1alpha1.Cortex,
+) *KubernetesResource {
+	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
+	labels := map[string]string{
+		"name": name,
+	}
+	annotations := map[string]string{
+		CortexConfigShasumAnnotationName: cortex.Spec.ConfigSHA(),
+	}
+	ref := &corev1.LocalObjectReference{Name: name}
+
+	return &KubernetesResource{
+		obj: sts,
+		ref: ref,
+		mutator: func() error {
+			sts.Spec.ServiceName = name
+			sts.Spec.Replicas = pointer.Int32Ptr(2)
+			sts.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
+			sts.Spec.Selector = &metav1.LabelSelector{
+				MatchLabels: map[string]string{"name": name},
+			}
+			sts.Spec.Template.Labels = labels
+			sts.Spec.Template.Annotations = annotations
+			sts.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
+			sts.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name:  name,
+					Image: cortex.Spec.Image,
+					Args: []string{
+						"-target=" + name,
+						"-config.file=/etc/cortex/config.yaml",
+					},
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "http",
+							ContainerPort: 80,
+						},
+						{
+							Name:          "grpc",
+							ContainerPort: 9095,
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							MountPath: "/etc/cortex",
+							Name:      "cortex",
+						},
+						{
+							Name:      "datadir",
+							MountPath: "/cortex",
+						},
+					},
+				},
+			}
+			sts.Spec.Template.Spec.ServiceAccountName = ServiceAccountName
+			sts.Spec.Template.Spec.Volumes = []corev1.Volume{
+				{
+					Name: "cortex",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "cortex",
+							},
+						},
+					},
+				},
+				{
+					Name: "datadir",
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: "datadir",
+						},
+					},
+				},
+			}
+			sts.Spec.VolumeClaimTemplates = []corev1.PersistentVolumeClaim{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "datadir"},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						// Uses the default storage class.
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								"storage": resource.MustParse("1Gi"),
 							},
 						},
 					},

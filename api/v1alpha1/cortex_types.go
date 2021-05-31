@@ -56,6 +56,7 @@ type CortexStatus struct {
 	DistributorRef   *DistributorReference   `json:"distributor,omitempty"`
 	QuerierRef       *QuerierReference       `json:"querier,omitempty"`
 	QueryFrontendRef *QueryFrontendReference `json:"query_frontend,omitempty"`
+	CompactorRef     *CompactorReference     `json:"compactor,omitempty"`
 }
 
 // MemcachedReference holds references to all the Memcached resources
@@ -108,6 +109,13 @@ type QuerierReference struct {
 type QueryFrontendReference struct {
 	Svc    *corev1.LocalObjectReference `json:"query_frontend_svc,omitempty"`
 	Deploy *corev1.LocalObjectReference `json:"query_frontend_deploy,omitempty"`
+}
+
+// CompactorReference holds references to the Service and Statefulset required to
+// run the Compactor
+type CompactorReference struct {
+	Svc *corev1.LocalObjectReference `json:"compactor_svc,omitempty"`
+	Sts *corev1.LocalObjectReference `json:"compactor_deploy,omitempty"`
 }
 
 //+kubebuilder:object:root=true
