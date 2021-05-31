@@ -51,10 +51,11 @@ type CortexStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	MemcachedRef   *MemcachedReference   `json:"memcached,omitempty"`
-	IngesterRef    *IngesterReference    `json:"ingester,omitempty"`
-	DistributorRef *DistributorReference `json:"distributor,omitempty"`
-	QuerierRef     *QuerierReference     `json:"querier,omitempty"`
+	MemcachedRef     *MemcachedReference     `json:"memcached,omitempty"`
+	IngesterRef      *IngesterReference      `json:"ingester,omitempty"`
+	DistributorRef   *DistributorReference   `json:"distributor,omitempty"`
+	QuerierRef       *QuerierReference       `json:"querier,omitempty"`
+	QueryFrontendRef *QueryFrontendReference `json:"query_frontend,omitempty"`
 }
 
 // MemcachedReference holds references to all the Memcached resources
@@ -100,6 +101,13 @@ type DistributorReference struct {
 type QuerierReference struct {
 	Svc    *corev1.LocalObjectReference `json:"querier_svc,omitempty"`
 	Deploy *corev1.LocalObjectReference `json:"querier_deploy,omitempty"`
+}
+
+// QueryFrontendReference holds references to the Service and Deployment required to
+// run the Query Frontends
+type QueryFrontendReference struct {
+	Svc    *corev1.LocalObjectReference `json:"query_frontend_svc,omitempty"`
+	Deploy *corev1.LocalObjectReference `json:"query_frontend_deploy,omitempty"`
 }
 
 //+kubebuilder:object:root=true

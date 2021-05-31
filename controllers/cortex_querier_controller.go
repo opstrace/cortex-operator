@@ -29,7 +29,7 @@ import (
 )
 
 // CortexQuerierReconciler reconciles a Cortex object and ensures the Cortex
-// Distributors are deployed
+// Queriers are deployed
 type CortexQuerierReconciler struct {
 	client.Client
 	Log    logr.Logger
