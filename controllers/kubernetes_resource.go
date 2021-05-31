@@ -21,10 +21,12 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -119,6 +121,77 @@ func NewService(req ctrl.Request, name string) *KubernetesResource {
 				},
 			}
 			svc.Spec.Selector = map[string]string{"name": name}
+
+			return nil
+		},
+	}
+}
+
+func NewDeployment(
+	req ctrl.Request,
+	name string,
+	cortex *cortexv1alpha1.Cortex,
+) *KubernetesResource {
+	deploy := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
+	labels := map[string]string{
+		"name":       name,
+		"memberlist": "gossip-ring",
+	}
+	annotations := map[string]string{
+		CortexConfigShasumAnnotationName: cortex.Spec.ConfigSHA(),
+	}
+	ref := &corev1.LocalObjectReference{Name: name}
+
+	return &KubernetesResource{
+		obj: deploy,
+		ref: ref,
+		mutator: func() error {
+			deploy.Spec.Replicas = pointer.Int32Ptr(2)
+			deploy.Spec.Selector = &metav1.LabelSelector{
+				MatchLabels: labels,
+			}
+			deploy.Spec.Template.Labels = labels
+			deploy.Spec.Template.Annotations = annotations
+			deploy.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
+			deploy.Spec.Template.Spec.Containers = []corev1.Container{
+				{
+					Name:            name,
+					Image:           cortex.Spec.Image,
+					ImagePullPolicy: corev1.PullIfNotPresent,
+					Args: []string{
+						"-target=" + name,
+						"-config.file=/etc/cortex/config.yaml",
+					},
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "http",
+							ContainerPort: 80,
+						},
+						{
+							Name:          "grpc",
+							ContainerPort: 9095,
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							MountPath: "/etc/cortex",
+							Name:      "cortex",
+						},
+					},
+				},
+			}
+			deploy.Spec.Template.Spec.Volumes = []corev1.Volume{
+				{
+					Name: "cortex",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "cortex",
+							},
+						},
+					},
+				},
+			}
 
 			return nil
 		},

@@ -28,9 +28,9 @@ import (
 	cortexv1alpha1 "github.com/opstrace/cortex-operator/api/v1alpha1"
 )
 
-// CortexDistributorReconciler reconciles a Cortex object and ensures the Cortex
-// Distributors are deployed
-type CortexDistributorReconciler struct {
+// CortexQueryFrontendReconciler reconciles a Cortex object and ensures the Cortex
+// Query Frontend are deployed
+type CortexQueryFrontendReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
@@ -51,7 +51,7 @@ type CortexDistributorReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
-func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *CortexQueryFrontendReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cortex", req.NamespacedName)
 
 	cortex := &cortexv1alpha1.Cortex{}
@@ -65,13 +65,13 @@ func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if cortex.Status.IngesterRef == nil {
-		log.Info("waiting for ingester")
+	if cortex.Status.QuerierRef == nil {
+		log.Info("waiting for querier")
 		return ctrl.Result{}, nil
 	}
 
-	if cortex.Status.DistributorRef == nil {
-		cortex.Status.DistributorRef = &cortexv1alpha1.DistributorReference{}
+	if cortex.Status.QueryFrontendRef == nil {
+		cortex.Status.QueryFrontendRef = &cortexv1alpha1.QueryFrontendReference{}
 	}
 
 	krr := KubernetesResourceReconciler{
@@ -81,15 +81,15 @@ func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		log:    log,
 	}
 
-	svc := NewService(req, "distributor")
-	cortex.Status.DistributorRef.Svc = svc.ref
+	svc := NewService(req, "query-frontend")
+	cortex.Status.QueryFrontendRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	deploy := NewDeployment(req, "distributor", cortex)
-	cortex.Status.DistributorRef.Deploy = deploy.ref
+	deploy := NewDeployment(req, "query-frontend", cortex)
+	cortex.Status.QueryFrontendRef.Deploy = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -99,7 +99,7 @@ func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CortexDistributorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *CortexQueryFrontendReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cortexv1alpha1.Cortex{}).
 		Complete(r)
