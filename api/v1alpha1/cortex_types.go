@@ -17,6 +17,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -41,6 +42,32 @@ type CortexSpec struct {
 type CortexStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	MemcachedRef *MemcachedReference `json:"memcached,omitempty"`
+}
+
+// MemcachedReference holds references to all the Memcached resources.
+type MemcachedReference struct {
+	MemcachedSvc             *corev1.LocalObjectReference `json:"memcached_svc,omitempty"`
+	MemcachedSts             *corev1.LocalObjectReference `json:"memcached_sts,omitempty"`
+	MemcachedIndexQueriesSvc *corev1.LocalObjectReference `json:"memcached_index_queries_svc,omitempty"`
+	MemcachedIndexQueriesSts *corev1.LocalObjectReference `json:"memcached_index_queries_sts,omitempty"`
+	MemcachedIndexWritesSvc  *corev1.LocalObjectReference `json:"memcached_index_writes_svc,omitempty"`
+	MemcachedIndexWritesSts  *corev1.LocalObjectReference `json:"memcached_index_writes_sts,omitempty"`
+	MemcachedResultsSvc      *corev1.LocalObjectReference `json:"memcached_results_svc,omitempty"`
+	MemcachedResultsSts      *corev1.LocalObjectReference `json:"memcached_results_sts,omitempty"`
+	MemcachedMetadataSvc     *corev1.LocalObjectReference `json:"memcached_metadata_svc,omitempty"`
+	MemcachedMetadataSts     *corev1.LocalObjectReference `json:"memcached_metadata_sts,omitempty"`
+}
+
+// IsSet returns true if all the resource references are not nil.
+func (r *MemcachedReference) IsSet() bool {
+	return r != nil &&
+		r.MemcachedSvc != nil && r.MemcachedSts != nil &&
+		r.MemcachedIndexQueriesSvc != nil && r.MemcachedIndexQueriesSts != nil &&
+		r.MemcachedIndexWritesSvc != nil && r.MemcachedIndexWritesSts != nil &&
+		r.MemcachedResultsSvc != nil && r.MemcachedResultsSts != nil &&
+		r.MemcachedMetadataSvc != nil && r.MemcachedMetadataSts != nil
 }
 
 //+kubebuilder:object:root=true
