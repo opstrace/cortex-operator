@@ -20,16 +20,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 
 	"github.com/go-logr/logr"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -100,19 +97,8 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeServiceAccount(req)
 	resources = append(resources, o)
 
-	if !cortex.Status.MemcachedRef.IsSet() {
-		log.Info("waiting for memcached to be set")
-		return ctrl.Result{}, nil
-	}
-
 	o = makeHeadlessService(req, "gossip-ring", "memberlist", servicePort{"gossip-ring", 7946})
 	resources = append(resources, o)
-
-	// o = makeStatefulSet(req, cortex, "store-gateway", cortexConfigSHA)
-	// resources = append(resources, o)
-
-	// o = makeService(req, "store-gateway", servicePort{"http", 80}, servicePort{"store-gateway-grpc", 9095})
-	// resources = append(resources, o)
 
 	for _, resource := range resources {
 		// Set up garbage collection. The object (resource.obj) will be
@@ -197,76 +183,6 @@ func makeServiceAccount(req ctrl.Request) *kubernetesResource {
 	}
 }
 
-func makeDeployment(
-	req ctrl.Request,
-	cortex *cortexv1alpha1.Cortex,
-	name string,
-	cortexConfigSHA string,
-) *kubernetesResource {
-	deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-	labels := map[string]string{
-		"name":       name,
-		"memberlist": "gossip-ring",
-	}
-	annotations := map[string]string{
-		CortexConfigShasumAnnotationName: cortexConfigSHA,
-	}
-
-	return &kubernetesResource{
-		obj: deployment,
-		mutator: func() error {
-			deployment.Spec.Replicas = pointer.Int32Ptr(2)
-			deployment.Spec.Selector = &metav1.LabelSelector{
-				MatchLabels: labels,
-			}
-			deployment.Spec.Template.Labels = labels
-			deployment.Spec.Template.Annotations = annotations
-			deployment.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
-			deployment.Spec.Template.Spec.Containers = []corev1.Container{
-				{
-					Name:            name,
-					Image:           cortex.Spec.Image,
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Args: []string{
-						"-target=" + name,
-						"-config.file=/etc/cortex/config.yaml",
-					},
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "http",
-							ContainerPort: 80,
-						},
-						{
-							Name:          "grpc",
-							ContainerPort: 9095,
-						},
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							MountPath: "/etc/cortex",
-							Name:      "cortex",
-						},
-					},
-				},
-			}
-			deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
-				{
-					Name: "cortex",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "cortex",
-							},
-						},
-					},
-				},
-			}
-
-			return nil
-		},
-	}
-}
-
 type servicePort struct {
 	Name string
 	Port int
@@ -291,31 +207,6 @@ func makeHeadlessService(req ctrl.Request, name string, selector string, service
 				})
 			}
 			service.Spec.Selector = map[string]string{selector: name}
-
-			return nil
-		},
-	}
-}
-
-func makeService(req ctrl.Request, name string, servicePorts ...servicePort) *kubernetesResource {
-	service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-
-	return &kubernetesResource{
-		obj: service,
-		mutator: func() error {
-			service.Labels = map[string]string{
-				"name": name,
-				"job":  fmt.Sprintf("%s.%s", req.Namespace, name),
-			}
-			service.Spec.Ports = make([]corev1.ServicePort, 0)
-			for _, p := range servicePorts {
-				service.Spec.Ports = append(service.Spec.Ports, corev1.ServicePort{
-					Name:       p.Name,
-					Port:       int32(p.Port),
-					TargetPort: intstr.FromInt(p.Port),
-				})
-			}
-			service.Spec.Selector = map[string]string{"name": name}
 
 			return nil
 		},
