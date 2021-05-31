@@ -73,7 +73,7 @@ var _ = Describe("Cortex controller", func() {
 			),
 			Entry(
 				"creates a service account",
-				types.NamespacedName{Name: CortexConfigMapName, Namespace: CortexNamespace},
+				types.NamespacedName{Name: ServiceAccountName, Namespace: CortexNamespace},
 				&corev1.ServiceAccount{},
 				func(createdObj client.Object) {
 					_, ok := createdObj.(*corev1.ServiceAccount)
