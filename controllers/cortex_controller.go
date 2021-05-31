@@ -127,12 +127,6 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	o = makeService(req, "query-frontend", servicePort{"http", 80}, servicePort{"querier-grpc", 9095})
 	resources = append(resources, o)
 
-	o = makeStatefulSetIngester(req, cortex, cortexConfigSHA)
-	resources = append(resources, o)
-
-	o = makeService(req, "ingester", servicePort{"http", 80}, servicePort{"ingester-grpc", 9095})
-	resources = append(resources, o)
-
 	o = makeStatefulSet(req, cortex, "store-gateway", cortexConfigSHA)
 	resources = append(resources, o)
 
@@ -347,120 +341,6 @@ func makeService(req ctrl.Request, name string, servicePorts ...servicePort) *ku
 				})
 			}
 			service.Spec.Selector = map[string]string{"name": name}
-
-			return nil
-		},
-	}
-}
-
-func makeStatefulSetIngester(
-	req ctrl.Request,
-	cortex *cortexv1alpha1.Cortex,
-	cortexConfigSHA string,
-) *kubernetesResource {
-	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: "ingester", Namespace: req.Namespace}}
-	labels := map[string]string{
-		"name": "ingester",
-	}
-	annotations := map[string]string{
-		CortexConfigShasumAnnotationName: cortexConfigSHA,
-	}
-
-	return &kubernetesResource{
-		obj: statefulSet,
-		mutator: func() error {
-			statefulSet.Spec.ServiceName = "ingester"
-			statefulSet.Spec.Replicas = pointer.Int32Ptr(2)
-			statefulSet.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
-			statefulSet.Spec.Selector = &metav1.LabelSelector{
-				MatchLabels: map[string]string{"name": "ingester"},
-			}
-			statefulSet.Spec.Template.Labels = labels
-			statefulSet.Spec.Template.Annotations = annotations
-			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity("ingester")
-			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
-				{
-					Name:  "ingester",
-					Image: cortex.Spec.Image,
-					Args: []string{
-						"-target=ingester",
-						"-ingester.chunk-encoding=3",
-						"-config.file=/etc/cortex/config.yaml",
-					},
-					ImagePullPolicy: corev1.PullIfNotPresent,
-					Ports: []corev1.ContainerPort{
-						{
-							Name:          "http",
-							ContainerPort: 80,
-						},
-						{
-							Name:          "grpc",
-							ContainerPort: 9095,
-						},
-					},
-					ReadinessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
-							HTTPGet: &corev1.HTTPGetAction{
-								Path:   "/ready",
-								Port:   intstr.FromInt(80),
-								Scheme: corev1.URISchemeHTTP,
-							},
-						},
-						InitialDelaySeconds: 45,
-						TimeoutSeconds:      1,
-						PeriodSeconds:       10,
-						SuccessThreshold:    1,
-						FailureThreshold:    3,
-					},
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							MountPath: "/etc/cortex",
-							Name:      "cortex",
-						},
-						{
-							Name:      "datadir",
-							MountPath: "/cortex",
-						},
-					},
-				},
-			}
-			statefulSet.Spec.Template.Spec.ServiceAccountName = ServiceAccountName
-			// https://cortexmetrics.io/docs/guides/running-cortex-on-kubernetes/#take-extra-care-with-ingesters
-			statefulSet.Spec.Template.Spec.TerminationGracePeriodSeconds = pointer.Int64Ptr(2400)
-			statefulSet.Spec.Template.Spec.Volumes = []corev1.Volume{
-				{
-					Name: "cortex",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "cortex",
-							},
-						},
-					},
-				},
-				{
-					Name: "datadir",
-					VolumeSource: corev1.VolumeSource{
-						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-							ClaimName: "datadir",
-						},
-					},
-				},
-			}
-			statefulSet.Spec.VolumeClaimTemplates = []corev1.PersistentVolumeClaim{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "datadir"},
-					Spec: corev1.PersistentVolumeClaimSpec{
-						// Uses the default storage class.
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						Resources: corev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								"storage": resource.MustParse("1Gi"),
-							},
-						},
-					},
-				},
-			}
 
 			return nil
 		},
