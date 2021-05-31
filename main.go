@@ -110,6 +110,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CortexDistributor")
 		os.Exit(1)
 	}
+	if err = (&controllers.CortexQuerierReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("CortexQuerier"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CortexQuerier")
+		os.Exit(1)
+	}
 	if err = (&cortexv1alpha1.Cortex{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Cortex")
 		os.Exit(1)
