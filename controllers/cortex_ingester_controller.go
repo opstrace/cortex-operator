@@ -23,7 +23,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -127,7 +126,7 @@ func NewIngesterStatefulset(
 		ref: ref,
 		mutator: func() error {
 			sts.Spec.ServiceName = "ingester"
-			sts.Spec.Replicas = pointer.Int32Ptr(2)
+			sts.Spec.Replicas = cortex.Spec.IngesterSpec.Replicas
 			sts.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
 			sts.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": "ingester"},
@@ -212,7 +211,7 @@ func NewIngesterStatefulset(
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"storage": resource.MustParse("1Gi"),
+								"storage": *cortex.Spec.IngesterSpec.DatadirSize,
 							},
 						},
 					},
