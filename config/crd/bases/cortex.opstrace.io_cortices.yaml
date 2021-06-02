@@ -113,7 +113,7 @@ spec:
             properties:
               compactor:
                 description: CompactorReference holds references to the Service and
-                  Statefulset required to run the Compactor
+                  StatefulSet required to run the Compactor
                 properties:
                   compactor_deploy:
                     description: LocalObjectReference contains enough information
@@ -159,7 +159,7 @@ spec:
                 type: object
               ingester:
                 description: IngesterReference holds references to the Service and
-                  Statefulset required to run the Ingesters
+                  StatefulSet required to run the Ingesters
                 properties:
                   ingester_sts:
                     description: LocalObjectReference contains enough information
@@ -323,7 +323,7 @@ spec:
                 type: object
               store_gateway:
                 description: StoreGatewayReference holds references to the Service
-                  and Statefulset required to run the Store Gateway
+                  and StatefulSet required to run the Store Gateway
                 properties:
                   store_gateway_deploy:
                     description: LocalObjectReference contains enough information

@@ -88,7 +88,7 @@ func (r *CortexIngesterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
-	sts := NewIngesterStatefulset(req, "ingester", cortex)
+	sts := NewIngesterStatefulSet(req, "ingester", cortex)
 	cortex.Status.IngesterRef.Sts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -105,7 +105,7 @@ func (r *CortexIngesterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func NewIngesterStatefulset(
+func NewIngesterStatefulSet(
 	req ctrl.Request,
 	name string,
 	cortex *cortexv1alpha1.Cortex,
