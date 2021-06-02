@@ -186,7 +186,7 @@ blocks_storage:
     chunks_cache:
       backend: memcached
       memcached:
-        addresses: 'dnssrv+memcached.{{.Namespace}}.svc.cluster.local:11211'
+        addresses: 'dnssrv+memcached-chunks.{{.Namespace}}.svc.cluster.local:11211'
     metadata_cache:
       backend: memcached
       memcached:

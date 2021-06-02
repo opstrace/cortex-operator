@@ -70,10 +70,6 @@ func (r *CortexQueryFrontendReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if cortex.Status.QueryFrontendRef == nil {
-		cortex.Status.QueryFrontendRef = &cortexv1alpha1.QueryFrontendReference{}
-	}
-
 	krr := KubernetesResourceReconciler{
 		scheme: r.Scheme,
 		client: r.Client,
@@ -82,14 +78,13 @@ func (r *CortexQueryFrontendReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	svc := NewService(req, "query-frontend")
-	cortex.Status.QueryFrontendRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	deploy := NewDeployment(req, "query-frontend", cortex, cortex.Spec.QueryFrontendSpec)
-	cortex.Status.QueryFrontendRef.Deploy = deploy.ref
+	cortex.Status.QueryFrontendRef = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {
 		return ctrl.Result{}, err

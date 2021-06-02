@@ -70,10 +70,6 @@ func (r *CortexIngesterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if cortex.Status.IngesterRef == nil {
-		cortex.Status.IngesterRef = &cortexv1alpha1.IngesterReference{}
-	}
-
 	krr := KubernetesResourceReconciler{
 		scheme: r.Scheme,
 		client: r.Client,
@@ -82,14 +78,13 @@ func (r *CortexIngesterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	svc := NewService(req, "ingester")
-	cortex.Status.IngesterRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	sts := NewIngesterStatefulSet(req, "ingester", cortex)
-	cortex.Status.IngesterRef.Sts = sts.ref
+	cortex.Status.IngesterRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err

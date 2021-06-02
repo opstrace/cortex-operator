@@ -65,10 +65,6 @@ func (r *CortexStoreGatewayReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if cortex.Status.StoreGatewayRef == nil {
-		cortex.Status.StoreGatewayRef = &cortexv1alpha1.StoreGatewayReference{}
-	}
-
 	krr := KubernetesResourceReconciler{
 		scheme: r.Scheme,
 		client: r.Client,
@@ -77,14 +73,13 @@ func (r *CortexStoreGatewayReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	svc := NewService(req, "store-gateway")
-	cortex.Status.StoreGatewayRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	sts := NewStatefulSet(req, "store-gateway", cortex, cortex.Spec.StoreGatewaySpec)
-	cortex.Status.StoreGatewayRef.Sts = sts.ref
+	cortex.Status.StoreGatewayRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err

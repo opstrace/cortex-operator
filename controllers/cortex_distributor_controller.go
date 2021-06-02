@@ -70,10 +70,6 @@ func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	if cortex.Status.DistributorRef == nil {
-		cortex.Status.DistributorRef = &cortexv1alpha1.DistributorReference{}
-	}
-
 	krr := KubernetesResourceReconciler{
 		scheme: r.Scheme,
 		client: r.Client,
@@ -82,14 +78,13 @@ func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	svc := NewService(req, "distributor")
-	cortex.Status.DistributorRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	deploy := NewDeployment(req, "distributor", cortex, cortex.Spec.DistributorSpec)
-	cortex.Status.DistributorRef.Deploy = deploy.ref
+	cortex.Status.DistributorRef = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {
 		return ctrl.Result{}, err

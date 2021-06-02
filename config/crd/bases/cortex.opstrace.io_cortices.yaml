@@ -198,79 +198,37 @@ spec:
             description: CortexStatus defines the observed state of Cortex
             properties:
               compactor:
-                description: CompactorReference holds references to the Service and
-                  StatefulSet required to run the Compactor
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
                 properties:
-                  compactor_deploy:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  compactor_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
                 type: object
               distributor:
-                description: DistributorReference holds references to the Service
-                  and Deployment required to run the Distributors
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
                 properties:
-                  distributor_deploy:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  distributor_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
                 type: object
               ingester:
-                description: IngesterReference holds references to the Service and
-                  StatefulSet required to run the Ingesters
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
                 properties:
-                  ingester_sts:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  ingester_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
                 type: object
               memcached:
                 description: MemcachedReference holds references to all the Memcached
-                  resources
+                  StatefulSets
                 properties:
-                  memcached_index_queries_sts:
+                  chunks_cache:
                     description: LocalObjectReference contains enough information
                       to let you locate the referenced object inside the same namespace.
                     properties:
@@ -279,7 +237,7 @@ spec:
                           TODO: Add other useful fields. apiVersion, kind, uid?'
                         type: string
                     type: object
-                  memcached_index_queries_svc:
+                  index_queries_cache:
                     description: LocalObjectReference contains enough information
                       to let you locate the referenced object inside the same namespace.
                     properties:
@@ -288,7 +246,7 @@ spec:
                           TODO: Add other useful fields. apiVersion, kind, uid?'
                         type: string
                     type: object
-                  memcached_index_writes_sts:
+                  index_writes_cache:
                     description: LocalObjectReference contains enough information
                       to let you locate the referenced object inside the same namespace.
                     properties:
@@ -297,7 +255,7 @@ spec:
                           TODO: Add other useful fields. apiVersion, kind, uid?'
                         type: string
                     type: object
-                  memcached_index_writes_svc:
+                  metadata_cache:
                     description: LocalObjectReference contains enough information
                       to let you locate the referenced object inside the same namespace.
                     properties:
@@ -306,52 +264,7 @@ spec:
                           TODO: Add other useful fields. apiVersion, kind, uid?'
                         type: string
                     type: object
-                  memcached_metadata_sts:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  memcached_metadata_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  memcached_results_sts:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  memcached_results_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  memcached_sts:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  memcached_svc:
+                  results_cache:
                     description: LocalObjectReference contains enough information
                       to let you locate the referenced object inside the same namespace.
                     properties:
@@ -362,73 +275,31 @@ spec:
                     type: object
                 type: object
               querier:
-                description: QuerierReference holds references to the Service and
-                  Deployment required to run the Queriers
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
                 properties:
-                  querier_deploy:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  querier_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
                 type: object
               query_frontend:
-                description: QueryFrontendReference holds references to the Service
-                  and Deployment required to run the Query Frontends
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
                 properties:
-                  query_frontend_deploy:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  query_frontend_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
                 type: object
               store_gateway:
-                description: StoreGatewayReference holds references to the Service
-                  and StatefulSet required to run the Store Gateway
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
                 properties:
-                  store_gateway_deploy:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
-                  store_gateway_svc:
-                    description: LocalObjectReference contains enough information
-                      to let you locate the referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                    type: object
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
                 type: object
             type: object
         type: object

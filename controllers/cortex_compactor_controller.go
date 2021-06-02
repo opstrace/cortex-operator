@@ -65,10 +65,6 @@ func (r *CortexCompactorReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if cortex.Status.CompactorRef == nil {
-		cortex.Status.CompactorRef = &cortexv1alpha1.CompactorReference{}
-	}
-
 	krr := KubernetesResourceReconciler{
 		scheme: r.Scheme,
 		client: r.Client,
@@ -77,14 +73,13 @@ func (r *CortexCompactorReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	svc := NewService(req, "compactor")
-	cortex.Status.CompactorRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	sts := NewStatefulSet(req, "compactor", cortex, cortex.Spec.CompactorSpec)
-	cortex.Status.CompactorRef.Sts = sts.ref
+	cortex.Status.CompactorRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err

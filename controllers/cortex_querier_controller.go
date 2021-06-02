@@ -70,10 +70,6 @@ func (r *CortexQuerierReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
-	if cortex.Status.QuerierRef == nil {
-		cortex.Status.QuerierRef = &cortexv1alpha1.QuerierReference{}
-	}
-
 	krr := KubernetesResourceReconciler{
 		scheme: r.Scheme,
 		client: r.Client,
@@ -82,14 +78,13 @@ func (r *CortexQuerierReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	svc := NewService(req, "querier")
-	cortex.Status.QuerierRef.Svc = svc.ref
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	deploy := NewDeployment(req, "querier", cortex, cortex.Spec.QuerierSpec)
-	cortex.Status.QuerierRef.Deploy = deploy.ref
+	cortex.Status.QuerierRef = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {
 		return ctrl.Result{}, err
