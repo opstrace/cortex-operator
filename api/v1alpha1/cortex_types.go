@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -34,6 +35,8 @@ type CortexSpec struct {
 
 	// Image of Cortex to deploy.
 	Image string `json:"image,omitempty"`
+	// IngesterSpec allows overriding Statefulset fields for the Ingester deployment.
+	IngesterSpec *TemplateSpec `json:"ingester_spec,omitempty"`
 
 	// Config accepts any object, meaning it accepts any valid Cortex config
 	// yaml. Defaulting and Validation are done in the webhooks.
@@ -124,6 +127,13 @@ type CompactorReference struct {
 type StoreGatewayReference struct {
 	Svc *corev1.LocalObjectReference `json:"store_gateway_svc,omitempty"`
 	Sts *corev1.LocalObjectReference `json:"store_gateway_deploy,omitempty"`
+}
+
+type TemplateSpec struct {
+	//+kubebuilder:default="1Gi"
+	DatadirSize *resource.Quantity `json:"datadir_size,omitempty"`
+	//+kubebuilder:default=2
+	Replicas *int32 `json:"replicas,omitempty"`
 }
 
 //+kubebuilder:object:root=true
