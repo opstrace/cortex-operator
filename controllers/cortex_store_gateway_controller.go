@@ -83,7 +83,7 @@ func (r *CortexStoreGatewayReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	sts := NewStatefulset(req, "store-gateway", cortex)
+	sts := NewStatefulset(req, "store-gateway", cortex, cortex.Spec.StoreGatewaySpec)
 	cortex.Status.StoreGatewayRef.Sts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {

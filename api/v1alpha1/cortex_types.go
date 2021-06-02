@@ -37,6 +37,10 @@ type CortexSpec struct {
 	Image string `json:"image,omitempty"`
 	// IngesterSpec allows overriding Statefulset fields for the Ingester deployment.
 	IngesterSpec *TemplateSpec `json:"ingester_spec,omitempty"`
+	// CompactorSpec allows overriding Statefulset fields for the Compactor deployment.
+	CompactorSpec *TemplateSpec `json:"compactor_spec,omitempty"`
+	// StoreGatewaySpec allows overriding Statefulset fields for the StoreGateway deployment.
+	StoreGatewaySpec *TemplateSpec `json:"store_gateway_spec,omitempty"`
 
 	// Config accepts any object, meaning it accepts any valid Cortex config
 	// yaml. Defaulting and Validation are done in the webhooks.
