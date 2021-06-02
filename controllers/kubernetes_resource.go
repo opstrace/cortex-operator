@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -131,6 +130,7 @@ func NewDeployment(
 	req ctrl.Request,
 	name string,
 	cortex *cortexv1alpha1.Cortex,
+	spec *cortexv1alpha1.DeploymentSpec,
 ) *KubernetesResource {
 	deploy := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	labels := map[string]string{
@@ -146,7 +146,7 @@ func NewDeployment(
 		obj: deploy,
 		ref: ref,
 		mutator: func() error {
-			deploy.Spec.Replicas = pointer.Int32Ptr(2)
+			deploy.Spec.Replicas = spec.Replicas
 			deploy.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: labels,
 			}
@@ -202,7 +202,7 @@ func NewStatefulset(
 	req ctrl.Request,
 	name string,
 	cortex *cortexv1alpha1.Cortex,
-	spec *cortexv1alpha1.TemplateSpec,
+	spec *cortexv1alpha1.StatefulSetSpec,
 ) *KubernetesResource {
 	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	labels := map[string]string{

@@ -88,7 +88,7 @@ func (r *CortexQuerierReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	deploy := NewDeployment(req, "querier", cortex)
+	deploy := NewDeployment(req, "querier", cortex, cortex.Spec.QuerierSpec)
 	cortex.Status.QuerierRef.Deploy = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {

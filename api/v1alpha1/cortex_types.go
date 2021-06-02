@@ -35,12 +35,13 @@ type CortexSpec struct {
 
 	// Image of Cortex to deploy.
 	Image string `json:"image,omitempty"`
-	// IngesterSpec allows overriding Statefulset fields for the Ingester deployment.
-	IngesterSpec *TemplateSpec `json:"ingester_spec,omitempty"`
-	// CompactorSpec allows overriding Statefulset fields for the Compactor deployment.
-	CompactorSpec *TemplateSpec `json:"compactor_spec,omitempty"`
-	// StoreGatewaySpec allows overriding Statefulset fields for the StoreGateway deployment.
-	StoreGatewaySpec *TemplateSpec `json:"store_gateway_spec,omitempty"`
+
+	IngesterSpec      *StatefulSetSpec `json:"ingester_spec,omitempty"`
+	CompactorSpec     *StatefulSetSpec `json:"compactor_spec,omitempty"`
+	StoreGatewaySpec  *StatefulSetSpec `json:"store_gateway_spec,omitempty"`
+	DistributorSpec   *DeploymentSpec  `json:"distributor_spec,omitempty"`
+	QuerierSpec       *DeploymentSpec  `json:"querier_spec,omitempty"`
+	QueryFrontendSpec *DeploymentSpec  `json:"query_frontend_spec,omitempty"`
 
 	// Config accepts any object, meaning it accepts any valid Cortex config
 	// yaml. Defaulting and Validation are done in the webhooks.
@@ -133,9 +134,14 @@ type StoreGatewayReference struct {
 	Sts *corev1.LocalObjectReference `json:"store_gateway_deploy,omitempty"`
 }
 
-type TemplateSpec struct {
+type StatefulSetSpec struct {
 	//+kubebuilder:default="1Gi"
 	DatadirSize *resource.Quantity `json:"datadir_size,omitempty"`
+	//+kubebuilder:default=2
+	Replicas *int32 `json:"replicas,omitempty"`
+}
+
+type DeploymentSpec struct {
 	//+kubebuilder:default=2
 	Replicas *int32 `json:"replicas,omitempty"`
 }

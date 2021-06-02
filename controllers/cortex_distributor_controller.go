@@ -88,7 +88,7 @@ func (r *CortexDistributorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, err
 	}
 
-	deploy := NewDeployment(req, "distributor", cortex)
+	deploy := NewDeployment(req, "distributor", cortex, cortex.Spec.DistributorSpec)
 	cortex.Status.DistributorRef.Deploy = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {
