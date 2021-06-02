@@ -88,7 +88,7 @@ func (r *CortexQueryFrontendReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	deploy := NewDeployment(req, "query-frontend", cortex)
+	deploy := NewDeployment(req, "query-frontend", cortex, cortex.Spec.QueryFrontendSpec)
 	cortex.Status.QueryFrontendRef.Deploy = deploy.ref
 	err = krr.Reconcile(ctx, deploy)
 	if err != nil {
