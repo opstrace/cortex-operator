@@ -62,79 +62,32 @@ type CortexStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	MemcachedRef     *MemcachedReference     `json:"memcached,omitempty"`
-	IngesterRef      *IngesterReference      `json:"ingester,omitempty"`
-	DistributorRef   *DistributorReference   `json:"distributor,omitempty"`
-	QuerierRef       *QuerierReference       `json:"querier,omitempty"`
-	QueryFrontendRef *QueryFrontendReference `json:"query_frontend,omitempty"`
-	CompactorRef     *CompactorReference     `json:"compactor,omitempty"`
-	StoreGatewayRef  *StoreGatewayReference  `json:"store_gateway,omitempty"`
+	MemcachedRef     *MemcachedReference          `json:"memcached,omitempty"`
+	IngesterRef      *corev1.LocalObjectReference `json:"ingester,omitempty"`
+	DistributorRef   *corev1.LocalObjectReference `json:"distributor,omitempty"`
+	QuerierRef       *corev1.LocalObjectReference `json:"querier,omitempty"`
+	QueryFrontendRef *corev1.LocalObjectReference `json:"query_frontend,omitempty"`
+	CompactorRef     *corev1.LocalObjectReference `json:"compactor,omitempty"`
+	StoreGatewayRef  *corev1.LocalObjectReference `json:"store_gateway,omitempty"`
 }
 
-// MemcachedReference holds references to all the Memcached resources
+// MemcachedReference holds references to all the Memcached StatefulSets
 type MemcachedReference struct {
-	MemcachedSvc             *corev1.LocalObjectReference `json:"memcached_svc,omitempty"`
-	MemcachedSts             *corev1.LocalObjectReference `json:"memcached_sts,omitempty"`
-	MemcachedIndexQueriesSvc *corev1.LocalObjectReference `json:"memcached_index_queries_svc,omitempty"`
-	MemcachedIndexQueriesSts *corev1.LocalObjectReference `json:"memcached_index_queries_sts,omitempty"`
-	MemcachedIndexWritesSvc  *corev1.LocalObjectReference `json:"memcached_index_writes_svc,omitempty"`
-	MemcachedIndexWritesSts  *corev1.LocalObjectReference `json:"memcached_index_writes_sts,omitempty"`
-	MemcachedResultsSvc      *corev1.LocalObjectReference `json:"memcached_results_svc,omitempty"`
-	MemcachedResultsSts      *corev1.LocalObjectReference `json:"memcached_results_sts,omitempty"`
-	MemcachedMetadataSvc     *corev1.LocalObjectReference `json:"memcached_metadata_svc,omitempty"`
-	MemcachedMetadataSts     *corev1.LocalObjectReference `json:"memcached_metadata_sts,omitempty"`
+	ChunksCacheRef       *corev1.LocalObjectReference `json:"chunks_cache,omitempty"`
+	IndexQueriesCacheRef *corev1.LocalObjectReference `json:"index_queries_cache,omitempty"`
+	IndexWritesCacheRef  *corev1.LocalObjectReference `json:"index_writes_cache,omitempty"`
+	ResultsCacheRef      *corev1.LocalObjectReference `json:"results_cache,omitempty"`
+	MetadataCacheRef     *corev1.LocalObjectReference `json:"metadata_cache,omitempty"`
 }
 
 // IsSet returns true if all the resource references are not nil
 func (r *MemcachedReference) IsSet() bool {
 	return r != nil &&
-		r.MemcachedSvc != nil && r.MemcachedSts != nil &&
-		r.MemcachedIndexQueriesSvc != nil && r.MemcachedIndexQueriesSts != nil &&
-		r.MemcachedIndexWritesSvc != nil && r.MemcachedIndexWritesSts != nil &&
-		r.MemcachedResultsSvc != nil && r.MemcachedResultsSts != nil &&
-		r.MemcachedMetadataSvc != nil && r.MemcachedMetadataSts != nil
-}
-
-// IngesterReference holds references to the Service and StatefulSet required to
-// run the Ingesters
-type IngesterReference struct {
-	Svc *corev1.LocalObjectReference `json:"ingester_svc,omitempty"`
-	Sts *corev1.LocalObjectReference `json:"ingester_sts,omitempty"`
-}
-
-// DistributorReference holds references to the Service and Deployment required to
-// run the Distributors
-type DistributorReference struct {
-	Svc    *corev1.LocalObjectReference `json:"distributor_svc,omitempty"`
-	Deploy *corev1.LocalObjectReference `json:"distributor_deploy,omitempty"`
-}
-
-// QuerierReference holds references to the Service and Deployment required to
-// run the Queriers
-type QuerierReference struct {
-	Svc    *corev1.LocalObjectReference `json:"querier_svc,omitempty"`
-	Deploy *corev1.LocalObjectReference `json:"querier_deploy,omitempty"`
-}
-
-// QueryFrontendReference holds references to the Service and Deployment required to
-// run the Query Frontends
-type QueryFrontendReference struct {
-	Svc    *corev1.LocalObjectReference `json:"query_frontend_svc,omitempty"`
-	Deploy *corev1.LocalObjectReference `json:"query_frontend_deploy,omitempty"`
-}
-
-// CompactorReference holds references to the Service and StatefulSet required to
-// run the Compactor
-type CompactorReference struct {
-	Svc *corev1.LocalObjectReference `json:"compactor_svc,omitempty"`
-	Sts *corev1.LocalObjectReference `json:"compactor_deploy,omitempty"`
-}
-
-// StoreGatewayReference holds references to the Service and StatefulSet required to
-// run the Store Gateway
-type StoreGatewayReference struct {
-	Svc *corev1.LocalObjectReference `json:"store_gateway_svc,omitempty"`
-	Sts *corev1.LocalObjectReference `json:"store_gateway_deploy,omitempty"`
+		r.ChunksCacheRef != nil &&
+		r.IndexQueriesCacheRef != nil &&
+		r.IndexWritesCacheRef != nil &&
+		r.ResultsCacheRef != nil &&
+		r.MetadataCacheRef != nil
 }
 
 type StatefulSetSpec struct {

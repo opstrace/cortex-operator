@@ -80,8 +80,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log:    log,
 	}
 
-	svc := NewMemcachedService(req, "memcached")
-	cortex.Status.MemcachedRef.MemcachedSvc = svc.ref
+	svc := NewMemcachedService(req, "memcached-chunks")
 	err := krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -89,18 +88,17 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	sts := NewMemcachedStatefulSet(
 		req,
-		"memcached",
+		"memcached-chunks",
 		cortex.Spec.Memcached.Image,
 		cortex.Spec.Memcached.ChunksCacheSpec,
 	)
-	cortex.Status.MemcachedRef.MemcachedSts = sts.ref
+	cortex.Status.MemcachedRef.ChunksCacheRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	svc = NewMemcachedService(req, "memcached-index-queries")
-	cortex.Status.MemcachedRef.MemcachedIndexQueriesSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -112,14 +110,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		cortex.Spec.Memcached.Image,
 		cortex.Spec.Memcached.IndexQueriesCacheSpec,
 	)
-	cortex.Status.MemcachedRef.MemcachedIndexQueriesSts = sts.ref
+	cortex.Status.MemcachedRef.IndexQueriesCacheRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	svc = NewMemcachedService(req, "memcached-index-writes")
-	cortex.Status.MemcachedRef.MemcachedIndexWritesSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -131,14 +128,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		cortex.Spec.Memcached.Image,
 		cortex.Spec.Memcached.IndexWritesCacheSpec,
 	)
-	cortex.Status.MemcachedRef.MemcachedIndexWritesSts = sts.ref
+	cortex.Status.MemcachedRef.IndexWritesCacheRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	svc = NewMemcachedService(req, "memcached-results")
-	cortex.Status.MemcachedRef.MemcachedResultsSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -150,14 +146,13 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		cortex.Spec.Memcached.Image,
 		cortex.Spec.Memcached.ResultsCacheSpec,
 	)
-	cortex.Status.MemcachedRef.MemcachedResultsSts = sts.ref
+	cortex.Status.MemcachedRef.ResultsCacheRef = svc.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	svc = NewMemcachedService(req, "memcached-metadata")
-	cortex.Status.MemcachedRef.MemcachedMetadataSvc = svc.ref
 	err = krr.Reconcile(ctx, svc)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -169,7 +164,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		cortex.Spec.Memcached.Image,
 		cortex.Spec.Memcached.MetadataCacheSpec,
 	)
-	cortex.Status.MemcachedRef.MemcachedMetadataSts = sts.ref
+	cortex.Status.MemcachedRef.MetadataCacheRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -187,10 +182,8 @@ func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func NewMemcachedService(req ctrl.Request, name string) *KubernetesResource {
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
-	ref := &corev1.LocalObjectReference{Name: name}
 	return &KubernetesResource{
 		obj: svc,
-		ref: ref,
 		mutator: func() error {
 			svc.Labels = map[string]string{
 				"name": name,
