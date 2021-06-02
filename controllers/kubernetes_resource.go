@@ -23,7 +23,6 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -203,6 +202,7 @@ func NewStatefulset(
 	req ctrl.Request,
 	name string,
 	cortex *cortexv1alpha1.Cortex,
+	spec *cortexv1alpha1.TemplateSpec,
 ) *KubernetesResource {
 	sts := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	labels := map[string]string{
@@ -218,7 +218,7 @@ func NewStatefulset(
 		ref: ref,
 		mutator: func() error {
 			sts.Spec.ServiceName = name
-			sts.Spec.Replicas = pointer.Int32Ptr(2)
+			sts.Spec.Replicas = spec.Replicas
 			sts.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
 			sts.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": name},
@@ -286,7 +286,7 @@ func NewStatefulset(
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"storage": resource.MustParse("1Gi"),
+								"storage": *spec.DatadirSize,
 							},
 						},
 					},

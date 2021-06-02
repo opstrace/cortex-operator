@@ -83,7 +83,7 @@ func (r *CortexCompactorReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
-	sts := NewStatefulset(req, "compactor", cortex)
+	sts := NewStatefulset(req, "compactor", cortex, cortex.Spec.CompactorSpec)
 	cortex.Status.CompactorRef.Sts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {

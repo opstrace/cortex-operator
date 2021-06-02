@@ -36,6 +36,22 @@ spec:
           spec:
             description: CortexSpec defines the desired state of Cortex
             properties:
+              compactor_spec:
+                description: CompactorSpec allows overriding Statefulset fields for
+                  the Compactor deployment.
+                properties:
+                  datadir_size:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    default: 1Gi
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  replicas:
+                    default: 2
+                    format: int32
+                    type: integer
+                type: object
               config:
                 description: Config accepts any object, meaning it accepts any valid
                   Cortex config yaml. Defaulting and Validation are done in the webhooks.
@@ -45,7 +61,24 @@ spec:
                 description: Image of Cortex to deploy.
                 type: string
               ingester_spec:
-                description: IngesterSpec allows overriding certain Statefulset fields.
+                description: IngesterSpec allows overriding Statefulset fields for
+                  the Ingester deployment.
+                properties:
+                  datadir_size:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    default: 1Gi
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  replicas:
+                    default: 2
+                    format: int32
+                    type: integer
+                type: object
+              store_gateway_spec:
+                description: StoreGatewaySpec allows overriding Statefulset fields
+                  for the StoreGateway deployment.
                 properties:
                   datadir_size:
                     anyOf:
