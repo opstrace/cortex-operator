@@ -122,14 +122,14 @@ func (in *CortexSpec) DeepCopyInto(out *CortexSpec) {
 		*out = new(StatefulSetSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.DistributorSpec != nil {
-		in, out := &in.DistributorSpec, &out.DistributorSpec
-		*out = new(DeploymentSpec)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.StoreGatewaySpec != nil {
 		in, out := &in.StoreGatewaySpec, &out.StoreGatewaySpec
 		*out = new(StatefulSetSpec)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.DistributorSpec != nil {
+		in, out := &in.DistributorSpec, &out.DistributorSpec
+		*out = new(DeploymentSpec)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.QuerierSpec != nil {

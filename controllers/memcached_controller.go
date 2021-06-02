@@ -88,7 +88,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts := NewMemcachedStatefulset(req, "memcached")
+	sts := NewMemcachedStatefulSet(req, "memcached")
 	cortex.Status.MemcachedRef.MemcachedSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -102,7 +102,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulset(req, "memcached-index-queries")
+	sts = NewMemcachedStatefulSet(req, "memcached-index-queries")
 	cortex.Status.MemcachedRef.MemcachedIndexQueriesSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -116,7 +116,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulset(req, "memcached-index-writes")
+	sts = NewMemcachedStatefulSet(req, "memcached-index-writes")
 	cortex.Status.MemcachedRef.MemcachedIndexWritesSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -130,7 +130,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulset(req, "memcached-results")
+	sts = NewMemcachedStatefulSet(req, "memcached-results")
 	cortex.Status.MemcachedRef.MemcachedResultsSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -144,7 +144,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulset(req, "memcached-metadata")
+	sts = NewMemcachedStatefulSet(req, "memcached-metadata")
 	cortex.Status.MemcachedRef.MemcachedMetadataSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -187,7 +187,7 @@ func NewMemcachedService(req ctrl.Request, name string) *KubernetesResource {
 	}
 }
 
-func NewMemcachedStatefulset(req ctrl.Request, name string) *KubernetesResource {
+func NewMemcachedStatefulSet(req ctrl.Request, name string) *KubernetesResource {
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	ref := &corev1.LocalObjectReference{Name: name}
 

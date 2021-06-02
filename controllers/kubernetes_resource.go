@@ -198,7 +198,7 @@ func NewDeployment(
 	}
 }
 
-func NewStatefulset(
+func NewStatefulSet(
 	req ctrl.Request,
 	name string,
 	cortex *cortexv1alpha1.Cortex,

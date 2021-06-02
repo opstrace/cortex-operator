@@ -92,7 +92,7 @@ func (r *MemcachedReference) IsSet() bool {
 		r.MemcachedMetadataSvc != nil && r.MemcachedMetadataSts != nil
 }
 
-// IngesterReference holds references to the Service and Statefulset required to
+// IngesterReference holds references to the Service and StatefulSet required to
 // run the Ingesters
 type IngesterReference struct {
 	Svc *corev1.LocalObjectReference `json:"ingester_svc,omitempty"`
@@ -120,14 +120,14 @@ type QueryFrontendReference struct {
 	Deploy *corev1.LocalObjectReference `json:"query_frontend_deploy,omitempty"`
 }
 
-// CompactorReference holds references to the Service and Statefulset required to
+// CompactorReference holds references to the Service and StatefulSet required to
 // run the Compactor
 type CompactorReference struct {
 	Svc *corev1.LocalObjectReference `json:"compactor_svc,omitempty"`
 	Sts *corev1.LocalObjectReference `json:"compactor_deploy,omitempty"`
 }
 
-// StoreGatewayReference holds references to the Service and Statefulset required to
+// StoreGatewayReference holds references to the Service and StatefulSet required to
 // run the Store Gateway
 type StoreGatewayReference struct {
 	Svc *corev1.LocalObjectReference `json:"store_gateway_svc,omitempty"`
