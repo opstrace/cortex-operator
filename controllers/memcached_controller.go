@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -88,7 +87,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts := NewMemcachedStatefulSet(req, "memcached")
+	sts := NewMemcachedStatefulSet(
+		req,
+		"memcached",
+		cortex.Spec.Memcached.Image,
+		cortex.Spec.Memcached.ChunksCacheSpec,
+	)
 	cortex.Status.MemcachedRef.MemcachedSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -102,7 +106,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulSet(req, "memcached-index-queries")
+	sts = NewMemcachedStatefulSet(
+		req,
+		"memcached-index-queries",
+		cortex.Spec.Memcached.Image,
+		cortex.Spec.Memcached.IndexQueriesCacheSpec,
+	)
 	cortex.Status.MemcachedRef.MemcachedIndexQueriesSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -116,7 +125,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulSet(req, "memcached-index-writes")
+	sts = NewMemcachedStatefulSet(
+		req,
+		"memcached-index-writes",
+		cortex.Spec.Memcached.Image,
+		cortex.Spec.Memcached.IndexWritesCacheSpec,
+	)
 	cortex.Status.MemcachedRef.MemcachedIndexWritesSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -130,7 +144,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulSet(req, "memcached-results")
+	sts = NewMemcachedStatefulSet(
+		req,
+		"memcached-results",
+		cortex.Spec.Memcached.Image,
+		cortex.Spec.Memcached.ResultsCacheSpec,
+	)
 	cortex.Status.MemcachedRef.MemcachedResultsSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -144,7 +163,12 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	sts = NewMemcachedStatefulSet(req, "memcached-metadata")
+	sts = NewMemcachedStatefulSet(
+		req,
+		"memcached-metadata",
+		cortex.Spec.Memcached.Image,
+		cortex.Spec.Memcached.MetadataCacheSpec,
+	)
 	cortex.Status.MemcachedRef.MemcachedMetadataSts = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
@@ -187,16 +211,22 @@ func NewMemcachedService(req ctrl.Request, name string) *KubernetesResource {
 	}
 }
 
-func NewMemcachedStatefulSet(req ctrl.Request, name string) *KubernetesResource {
+func NewMemcachedStatefulSet(
+	req ctrl.Request,
+	name string,
+	image string,
+	spec *cortexv1alpha1.MemcachedStatefulSetSpec,
+) *KubernetesResource {
 	statefulSet := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: req.Namespace}}
 	ref := &corev1.LocalObjectReference{Name: name}
+	args := append([]string{"-v"}, spec.AsArgs()...)
 
 	return &KubernetesResource{
 		obj: statefulSet,
 		ref: ref,
 		mutator: func() error {
 			statefulSet.Spec.ServiceName = name
-			statefulSet.Spec.Replicas = pointer.Int32Ptr(1)
+			statefulSet.Spec.Replicas = spec.Replicas
 			statefulSet.Spec.PodManagementPolicy = appsv1.ParallelPodManagement
 			statefulSet.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": name},
@@ -207,14 +237,9 @@ func NewMemcachedStatefulSet(req ctrl.Request, name string) *KubernetesResource 
 			statefulSet.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
 			statefulSet.Spec.Template.Spec.Containers = []corev1.Container{
 				{
-					Name:  "memcached",
-					Image: "memcached:1.6.9-alpine",
-					Args: []string{
-						"-m 4096",
-						"-I 2m",
-						"-c 1024",
-						"-v",
-					},
+					Name:            "memcached",
+					Image:           image,
+					Args:            args,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 					Ports: []corev1.ContainerPort{
 						{

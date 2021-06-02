@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -42,6 +43,8 @@ type CortexSpec struct {
 	DistributorSpec   *DeploymentSpec  `json:"distributor_spec,omitempty"`
 	QuerierSpec       *DeploymentSpec  `json:"querier_spec,omitempty"`
 	QueryFrontendSpec *DeploymentSpec  `json:"query_frontend_spec,omitempty"`
+
+	Memcached *MemcachedSpec `json:"memcached,omitempty"`
 
 	// Config accepts any object, meaning it accepts any valid Cortex config
 	// yaml. Defaulting and Validation are done in the webhooks.
@@ -144,6 +147,35 @@ type StatefulSetSpec struct {
 type DeploymentSpec struct {
 	//+kubebuilder:default=2
 	Replicas *int32 `json:"replicas,omitempty"`
+}
+
+type MemcachedSpec struct {
+	//+kubebuilder:default="memcached:1.6.9-alpine"
+	Image string `json:"image,omitempty"`
+
+	ChunksCacheSpec       *MemcachedStatefulSetSpec `json:"chunks_cache_spec,omitempty"`
+	IndexQueriesCacheSpec *MemcachedStatefulSetSpec `json:"index_queries_cache_spec,omitempty"`
+	IndexWritesCacheSpec  *MemcachedStatefulSetSpec `json:"index_writes_cache_spec,omitempty"`
+	ResultsCacheSpec      *MemcachedStatefulSetSpec `json:"results_cache_spec,omitempty"`
+	MetadataCacheSpec     *MemcachedStatefulSetSpec `json:"metadata_cache_spec,omitempty"`
+}
+
+type MemcachedStatefulSetSpec struct {
+	//+kubebuilder:default=2
+	Replicas *int32 `json:"replicas,omitempty"`
+	// MemoryLimit is the item memory in megabytes
+	//+kubebuilder:default=4096
+	MemoryLimit *int32 `json:"memory_limit,omitempty"`
+	// MaxItemSize adjusts max item size
+	//+kubebuilder:default="2m"
+	MaxItemSize *string `json:"max_item_size,omitempty"`
+}
+
+func (m *MemcachedStatefulSetSpec) AsArgs() []string {
+	return []string{
+		fmt.Sprintf("-m %d", *m.MemoryLimit),
+		fmt.Sprintf("-I %s", *m.MaxItemSize),
+	}
 }
 
 //+kubebuilder:object:root=true

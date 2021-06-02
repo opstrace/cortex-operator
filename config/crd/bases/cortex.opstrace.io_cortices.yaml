@@ -79,6 +79,92 @@ spec:
                     format: int32
                     type: integer
                 type: object
+              memcached:
+                properties:
+                  chunks_cache_spec:
+                    properties:
+                      max_item_size:
+                        default: 2m
+                        description: MaxItemSize adjusts max item size
+                        type: string
+                      memory_limit:
+                        default: 4096
+                        description: MemoryLimit is the item memory in megabytes
+                        format: int32
+                        type: integer
+                      replicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                    type: object
+                  image:
+                    default: memcached:1.6.9-alpine
+                    type: string
+                  index_queries_cache_spec:
+                    properties:
+                      max_item_size:
+                        default: 2m
+                        description: MaxItemSize adjusts max item size
+                        type: string
+                      memory_limit:
+                        default: 4096
+                        description: MemoryLimit is the item memory in megabytes
+                        format: int32
+                        type: integer
+                      replicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                    type: object
+                  index_writes_cache_spec:
+                    properties:
+                      max_item_size:
+                        default: 2m
+                        description: MaxItemSize adjusts max item size
+                        type: string
+                      memory_limit:
+                        default: 4096
+                        description: MemoryLimit is the item memory in megabytes
+                        format: int32
+                        type: integer
+                      replicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                    type: object
+                  metadata_cache_spec:
+                    properties:
+                      max_item_size:
+                        default: 2m
+                        description: MaxItemSize adjusts max item size
+                        type: string
+                      memory_limit:
+                        default: 4096
+                        description: MemoryLimit is the item memory in megabytes
+                        format: int32
+                        type: integer
+                      replicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                    type: object
+                  results_cache_spec:
+                    properties:
+                      max_item_size:
+                        default: 2m
+                        description: MaxItemSize adjusts max item size
+                        type: string
+                      memory_limit:
+                        default: 4096
+                        description: MemoryLimit is the item memory in megabytes
+                        format: int32
+                        type: integer
+                      replicas:
+                        default: 2
+                        format: int32
+                        type: integer
+                    type: object
+                type: object
               querier_spec:
                 properties:
                   replicas:
