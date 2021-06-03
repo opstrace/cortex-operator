@@ -93,6 +93,8 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
+cert-manager: ## Install cert-manager into the K8s cluster specified in ~/.kube/config.
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
 
 CONTROLLER_GEN = $(BASEDIR)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
@@ -105,7 +107,7 @@ kustomize: ## Download kustomize locally if necessary.
 ##@ Kind Deployment
 kind: ## Create a kind cluster and install cert-manager.
 	kind create cluster
-	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+	$(MAKE) cert-manager
 
 kind-deploy: manifests kustomize docker-build kind-load-image deploy ## Deploy to kind cluster.
 

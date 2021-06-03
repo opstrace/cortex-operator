@@ -17,6 +17,7 @@ The cortex-operator is a project to manage the lifecycle of [Cortex](https://cor
 - Two S3 buckets
 - AWS IAM policy for nodes in EKS cluster to access S3 buckets
 - Kubectl configured to access the EKS cluster
+- [cert-manager](https://github.com/jetstack/cert-manager) version 1.3.1+
 
 Check this [guide](./docs/guides/terraform/README.md) on how to set up the infrastructure with Terraform.
 
