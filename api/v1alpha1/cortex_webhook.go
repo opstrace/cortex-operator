@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 
 	"github.com/miracl/conflate"
@@ -48,34 +49,6 @@ var _ webhook.Defaulter = &Cortex{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *Cortex) Default() {
 	cortexlog.Info("default", "name", r.Name)
-
-	// Get the default configuration.
-	defaultCortexConfig, err := generateCortexConfig(r)
-	if err != nil {
-		cortexlog.Error(err, "failed to generate default configuration")
-		return
-	}
-	// Convert it to JSON to be able to merge with the user config.
-	y, err := yaml.YAMLToJSON(defaultCortexConfig)
-	if err != nil {
-		cortexlog.Error(err, "failed to convert default configuration")
-		return
-	}
-	// Merge the user config and the defaults. The defaults will override fields
-	// set by the user.
-	c, err := conflate.FromData(r.Spec.Config.Raw, y)
-	if err != nil {
-		cortexlog.Error(err, "failed to merge default configuration with user settings")
-		return
-	}
-	// Get the data as json.
-	j, err := c.MarshalJSON()
-	if err != nil {
-		cortexlog.Error(err, "failed to generate yaml with defaults and user config")
-		return
-	}
-	// Kubernetes stores Spec.Config as JSON.
-	r.Spec.Config.Raw = j
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -86,27 +59,13 @@ var _ webhook.Validator = &Cortex{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Cortex) ValidateCreate() error {
 	cortexlog.Info("validate create", "name", r.Name)
-
-	cfg := &cortex.Config{}
-	// Set up the cortex config defaults otherwise later validation will fail
-	// because fields are not set.
-	flagext.DefaultValues(cfg)
-	// Unmarshal the desired cortex config into the object overriding the
-	// defaults.
-	err := yamlv2.UnmarshalStrict(r.Spec.Config.Raw, cfg)
-	if err != nil {
-		return err
-	}
-	// Validate the cortex configuration.
-	return cfg.Validate(nil)
+	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *Cortex) ValidateUpdate(old runtime.Object) error {
 	cortexlog.Info("validate update", "name", r.Name)
-
-	// TODO(user): fill in your validation logic upon object update.
-	return nil
+	return r.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -119,7 +78,7 @@ func (r *Cortex) ValidateDelete() error {
 
 // generateCortexConfig returns a config yaml with the cortex-operator default
 // configuration.
-func generateCortexConfig(cortex *Cortex) ([]byte, error) {
+func (r *Cortex) generateCortexConfig() ([]byte, error) {
 	t := template.New("cortex-config")
 
 	t, err := t.Parse(DefaultCortexConfigTemplate)
@@ -128,12 +87,75 @@ func generateCortexConfig(cortex *Cortex) ([]byte, error) {
 	}
 
 	var b bytes.Buffer
-	err = t.Execute(&b, cortex)
+	err = t.Execute(&b, r)
 	if err != nil {
 		return nil, err
 	}
 
 	return b.Bytes(), nil
+}
+
+func (r *Cortex) AsJSON() ([]byte, error) {
+	// Generate the default configuration.
+	defaultCortexConfig, err := r.generateCortexConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate default configuration: %w", err)
+	}
+	// Convert it to JSON to be able to merge with the user config.
+	y, err := yaml.YAMLToJSON(defaultCortexConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert default configuration: %w", err)
+	}
+	// Merge the user config and the defaults. The defaults will override fields
+	// set by the user.
+	c, err := conflate.FromData(r.Spec.Config.Raw, y)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge default configuration with user settings: %w", err)
+	}
+	// Convert the data to json.
+	j, err := c.MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert user configuration: %w", err)
+	}
+	return j, nil
+}
+
+func (r *Cortex) AsYAML() ([]byte, error) {
+	j, err := r.AsJSON()
+	if err != nil {
+		return nil, err
+	}
+	return yaml.JSONToYAML(j)
+}
+
+// AsCortexConfig converts the configuration to an upstream cortex.Config
+// object.
+func (r *Cortex) AsCortexConfig() (*cortex.Config, error) {
+	j, err := r.AsJSON()
+	if err != nil {
+		return nil, err
+	}
+	// Unmarshal the json to a cortex.Config structure to validate it.
+	cfg := &cortex.Config{}
+	// Set up the cortex config defaults otherwise validation will fail because
+	// fields are not set.
+	flagext.DefaultValues(cfg)
+	// Unmarshal the desired cortex config into the object overriding the
+	// defaults.
+	err = yamlv2.UnmarshalStrict(j, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to : %w", err)
+	}
+	return cfg, nil
+}
+
+func (r *Cortex) Validate() error {
+	cfg, err := r.AsCortexConfig()
+	if err != nil {
+		return nil
+	}
+	// Validate the cortex configuration.
+	return cfg.Validate(nil)
 }
 
 const DefaultCortexConfigTemplate = `
