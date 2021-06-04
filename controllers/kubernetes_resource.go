@@ -184,9 +184,32 @@ func NewDeployment(
 				{
 					Name: "cortex",
 					VolumeSource: corev1.VolumeSource{
+						Projected: &corev1.ProjectedVolumeSource{
+							Sources: []corev1.VolumeProjection{
+								{
+									ConfigMap: &corev1.ConfigMapProjection{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: CortexConfigMapName,
+										},
+									},
+								},
+								{
+									ConfigMap: &corev1.ConfigMapProjection{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: CortexRuntimeConfigMapName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: CortexRuntimeConfigMapName,
+					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "cortex",
+								Name: CortexRuntimeConfigMapName,
 							},
 						},
 					},
@@ -262,9 +285,22 @@ func NewStatefulSet(
 				{
 					Name: "cortex",
 					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "cortex",
+						Projected: &corev1.ProjectedVolumeSource{
+							Sources: []corev1.VolumeProjection{
+								{
+									ConfigMap: &corev1.ConfigMapProjection{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: CortexConfigMapName,
+										},
+									},
+								},
+								{
+									ConfigMap: &corev1.ConfigMapProjection{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: CortexRuntimeConfigMapName,
+										},
+									},
+								},
 							},
 						},
 					},

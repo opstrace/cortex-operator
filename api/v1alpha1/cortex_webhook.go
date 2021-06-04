@@ -245,4 +245,7 @@ ruler:
     kvstore:
       store: memberlist
   alertmanager_url: 'http://alertmanager.{{.Namespace}}.svc.cluster.local/alertmanager/'
+runtime_config:
+  file: /etc/cortex/runtime-config.yaml
+  period: 5s
 `

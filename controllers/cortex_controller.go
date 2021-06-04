@@ -48,6 +48,7 @@ const FinalizerName = "cortex.opstrace.io/finalizer"
 const ServiceAccountName = "cortex"
 const CortexConfigShasumAnnotationName = "cortex-operator/cortex-config-shasum"
 const CortexConfigMapName = "cortex"
+const CortexRuntimeConfigMapName = "cortex-runtime-config"
 const GossipRingServiceName = "gossip-ring"
 
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices,verbs=get;list;watch;create;update;patch;delete
@@ -94,6 +95,12 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, err
 	}
 
+	cm = NewCortexRuntimeConfigMap(req)
+	err = krr.Reconcile(ctx, cm)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	sa := NewServiceAccount(req)
 	err = krr.Reconcile(ctx, sa)
 	if err != nil {
@@ -134,6 +141,31 @@ func NewCortexConfigMap(
 		mutator: func() error {
 			configMap.Data = map[string]string{
 				"config.yaml": string(y),
+			}
+			return nil
+		},
+	}
+}
+
+func NewCortexRuntimeConfigMap(
+	req ctrl.Request,
+) *KubernetesResource {
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      CortexRuntimeConfigMapName,
+			Namespace: req.Namespace,
+		},
+	}
+
+	data := map[string]string{
+		"runtime-config.yaml": "",
+	}
+
+	return &KubernetesResource{
+		obj: configMap,
+		mutator: func() error {
+			if configMap.Data == nil {
+				configMap.Data = data
 			}
 			return nil
 		},
