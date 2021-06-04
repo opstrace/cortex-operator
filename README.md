@@ -159,31 +159,18 @@ INFO[0000] Querying time from=2021-05-19T12:25:29Z to=2021-05-19T13:25:29Z with 
 
 Cortex has a concept of [“runtime config” file](https://cortexmetrics.io/docs/configuration/arguments/#runtime-configuration-file) that Cortex components reload while running. It allows the operator to change aspects of Cortex configuration without restarting it.
 
-The `cortex-operator` supports this feature using Kubernetes ConfigMaps. By default, the operator creates a ConfigMap named `cortex-runtime-config` in the namespace where Cortex is running. The operator can edit it to apply the desired configuration overrides. The `cortex-operator` sets the reload period to `5s` (default is `10s`).
+The `cortex-operator` supports this feature by configuring setting the `runtime_config.overrides` field in the CRD resource. The operator creates a ConfigMap named `cortex-runtime-config` in the namespace where Cortex is running. The ConfigMap is mounted in the Cortex components as a Kubernetes Volume.
 
-By default, the overrides are empty:
+Example for setting the limits:
 
 ```
-$ kubectl -n default get configmap cortex-runtime-config -o yaml
-apiVersion: v1
-data:
-  runtime-config.yaml: ""
-kind: ConfigMap
+apiVersion: cortex.opstrace.io/v1alpha1
+kind: Cortex
 metadata:
-  name: cortex-runtime-config
-  namespace: default
-```
+  name: cortex-sample
+spec:
 
-Example of overriding the limits:
-
-```
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cortex-runtime-config
-  namespace: default
-data:
-  runtime-config.yaml: |
+  runtime_config:
     overrides:
       tenant1:
         ingestion_rate: 10000

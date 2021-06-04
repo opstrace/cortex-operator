@@ -76,6 +76,14 @@ func (r *Cortex) ValidateDelete() error {
 	return nil
 }
 
+func (r *RuntimeConfigSpec) AsYAML() ([]byte, error) {
+	if r == nil {
+		return []byte{}, nil
+	}
+
+	return yaml.Marshal(r)
+}
+
 // generateCortexConfig returns a config yaml with the cortex-operator default
 // configuration.
 func (r *Cortex) generateCortexConfig() ([]byte, error) {

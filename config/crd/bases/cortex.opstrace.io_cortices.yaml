@@ -179,6 +179,12 @@ spec:
                     format: int32
                     type: integer
                 type: object
+              runtime_config:
+                properties:
+                  overrides:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                type: object
               store_gateway_spec:
                 properties:
                   datadir_size:

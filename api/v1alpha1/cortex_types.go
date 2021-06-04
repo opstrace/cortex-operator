@@ -50,6 +50,8 @@ type CortexSpec struct {
 	// yaml. Defaulting and Validation are done in the webhooks.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config runtime.RawExtension `json:"config,omitempty"`
+
+	RuntimeConfig *RuntimeConfigSpec `json:"runtime_config,omitempty"`
 }
 
 func (c *CortexSpec) ConfigSHA() string {
@@ -129,6 +131,11 @@ func (m *MemcachedStatefulSetSpec) AsArgs() []string {
 		fmt.Sprintf("-m %d", *m.MemoryLimit),
 		fmt.Sprintf("-I %s", *m.MaxItemSize),
 	}
+}
+
+type RuntimeConfigSpec struct {
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Overrides runtime.RawExtension `json:"overrides,omitempty"`
 }
 
 //+kubebuilder:object:root=true
