@@ -24,32 +24,19 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	cortexv1alpha1 "github.com/opstrace/cortex-operator/api/v1alpha1"
 )
 
-// CortexReconciler reconciles a Cortex object
-type CortexReconciler struct {
+// CortexRuntimeConfigReconciler reconciles a Cortex object and ensures the
+// Cortex runtime config map is updated accordingly.
+type CortexRuntimeConfigReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
-
-type kubernetesResource struct {
-	obj     client.Object
-	mutator controllerutil.MutateFn
-}
-
-const FinalizerName = "cortex.opstrace.io/finalizer"
-const ServiceAccountName = "cortex"
-const CortexConfigShasumAnnotationName = "cortex-operator/cortex-config-shasum"
-const CortexConfigMapName = "cortex"
-const CortexRuntimeConfigMapName = "cortex-runtime-config"
-const GossipRingServiceName = "gossip-ring"
 
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices/status,verbs=get;update;patch
@@ -60,15 +47,13 @@ const GossipRingServiceName = "gossip-ring"
 //
 
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete;scope=Cluster
-//+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete;scope=Cluster
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete;scope=Cluster
 //+kubebuilder:rbac:groups="apps",resources=statefulsets,verbs=get;list;watch;create;update;patch;delete;scope=Cluster
-//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete;scope=Cluster
 
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
-func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *CortexRuntimeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("cortex", req.NamespacedName)
 
 	cortex := &cortexv1alpha1.Cortex{}
@@ -89,20 +74,13 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		log:    log,
 	}
 
-	cm := NewCortexConfigMap(req, cortex)
-	err := krr.Reconcile(ctx, cm)
+	cm, err := NewCortexRuntimeConfigMap(req, cortex)
 	if err != nil {
-		return ctrl.Result{}, err
+		log.Error(err, "failed to generate cortex runtime config map, will not retry")
+		return ctrl.Result{Requeue: false}, err
 	}
 
-	sa := NewServiceAccount(req)
-	err = krr.Reconcile(ctx, sa)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	svc := NewGossipRingService(req)
-	err = krr.Reconcile(ctx, svc)
+	err = krr.Reconcile(ctx, cm)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -111,72 +89,37 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CortexReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *CortexRuntimeConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&cortexv1alpha1.Cortex{}).
 		Complete(r)
 }
 
-func NewCortexConfigMap(
+func NewCortexRuntimeConfigMap(
 	req ctrl.Request,
 	cortex *cortexv1alpha1.Cortex,
-) *KubernetesResource {
-	// Validation errors were handled by the webhooks.
-	y, _ := cortex.AsYAML()
+) (*KubernetesResource, error) {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      CortexConfigMapName,
+			Name:      CortexRuntimeConfigMapName,
 			Namespace: req.Namespace,
 		},
+	}
+
+	y, err := cortex.Spec.RuntimeConfig.AsYAML()
+	if err != nil {
+		return nil, err
+	}
+
+	data := map[string]string{
+		"runtime-config.yaml": string(y),
 	}
 
 	return &KubernetesResource{
 		obj: configMap,
 		mutator: func() error {
-			configMap.Data = map[string]string{
-				"config.yaml": string(y),
-			}
+			configMap.Data = data
 			return nil
 		},
-	}
-}
-
-func NewServiceAccount(req ctrl.Request) *KubernetesResource {
-	serviceAccount := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: ServiceAccountName, Namespace: req.Namespace}}
-
-	return &KubernetesResource{
-		obj: serviceAccount,
-		mutator: func() error {
-			return nil
-		},
-	}
-}
-
-func NewGossipRingService(req ctrl.Request) *KubernetesResource {
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      GossipRingServiceName,
-			Namespace: req.Namespace,
-		},
-	}
-
-	return &KubernetesResource{
-		obj: service,
-		mutator: func() error {
-			service.Labels = map[string]string{
-				"name": GossipRingServiceName,
-			}
-			service.Spec.Ports = make([]corev1.ServicePort, 0)
-			service.Spec.ClusterIP = "None"
-			service.Spec.Ports = []corev1.ServicePort{
-				{
-					Name:       GossipRingServiceName,
-					Port:       int32(7946),
-					TargetPort: intstr.FromInt(7946),
-				},
-			}
-			service.Spec.Selector = map[string]string{"memberlist": GossipRingServiceName}
-			return nil
-		},
-	}
+	}, nil
 }
