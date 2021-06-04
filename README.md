@@ -155,9 +155,48 @@ INFO[0000] Querying time from=2021-05-19T12:25:29Z to=2021-05-19T13:25:29Z with 
 {__name__="up", instance="ip-10-0-1-47.us-west-2.compute.internal", job="monitoring/node-exporter", namespace="monitoring"} 1 1621430720938
 ```
 
+## Cortex Runtime Configuration
+
+Cortex has a concept of [“runtime config” file](https://cortexmetrics.io/docs/configuration/arguments/#runtime-configuration-file) that Cortex components reload while running. It allows the operator to change aspects of Cortex configuration without restarting it.
+
+The `cortex-operator` supports this feature using Kubernetes ConfigMaps. By default, the operator creates a ConfigMap named `cortex-runtime-config` in the namespace where Cortex is running. The operator can edit it to apply the desired configuration overrides. The `cortex-operator` sets the reload period to `5s` (default is `10s`).
+
+By default, the overrides are empty:
+
+```
+$ kubectl -n default get configmap cortex-runtime-config -o yaml
+apiVersion: v1
+data:
+  runtime-config.yaml: ""
+kind: ConfigMap
+metadata:
+  name: cortex-runtime-config
+  namespace: default
+```
+
+Example of overriding the limits:
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cortex-runtime-config
+  namespace: default
+data:
+  runtime-config.yaml: |
+    overrides:
+      tenant1:
+        ingestion_rate: 10000
+        max_series_per_metric: 100000
+        max_series_per_query: 100000
+      tenant2:
+        max_samples_per_query: 1000000
+        max_series_per_metric: 100000
+        max_series_per_query: 100000
+```
+
 ## Roadmap
 
-- Webhook validation of Cortex configuration
 - Deploy Cortex in different topologies
 - Automate moving workloads to other instance
 - Auto-scaling of services
