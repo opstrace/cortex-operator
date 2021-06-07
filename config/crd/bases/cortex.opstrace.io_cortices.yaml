@@ -49,6 +49,8 @@ spec:
                     default: 2
                     format: int32
                     type: integer
+                  storage_class_name:
+                    type: string
                 type: object
               config:
                 description: Config accepts any object, meaning it accepts any valid
@@ -78,6 +80,8 @@ spec:
                     default: 2
                     format: int32
                     type: integer
+                  storage_class_name:
+                    type: string
                 type: object
               memcached:
                 properties:
@@ -198,6 +202,8 @@ spec:
                     default: 2
                     format: int32
                     type: integer
+                  storage_class_name:
+                    type: string
                 type: object
             type: object
           status:

@@ -94,7 +94,8 @@ func (r *MemcachedReference) IsSet() bool {
 
 type StatefulSetSpec struct {
 	//+kubebuilder:default="1Gi"
-	DatadirSize *resource.Quantity `json:"datadir_size,omitempty"`
+	DatadirSize      *resource.Quantity `json:"datadir_size,omitempty"`
+	StorageClassName *string            `json:"storage_class_name,omitempty"`
 	//+kubebuilder:default=2
 	Replicas *int32 `json:"replicas,omitempty"`
 }
