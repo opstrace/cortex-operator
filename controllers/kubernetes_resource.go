@@ -318,8 +318,8 @@ func NewStatefulSet(
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "datadir"},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						// Uses the default storage class.
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						StorageClassName: spec.StorageClassName,
+						AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"storage": *spec.DatadirSize,
