@@ -47,7 +47,7 @@ type kubernetesResource struct {
 const FinalizerName = "cortex.opstrace.io/finalizer"
 const ServiceAccountName = "cortex"
 const CortexConfigShasumAnnotationName = "cortex-operator/cortex-config-shasum"
-const CortexConfigMapName = "cortex"
+const CortexConfigMapName = "cortex-config"
 const CortexRuntimeConfigMapName = "cortex-runtime-config"
 const GossipRingServiceName = "gossip-ring"
 
