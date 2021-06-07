@@ -170,8 +170,7 @@ const DefaultCortexConfigTemplate = `
 http_prefix: ''
 api:
   alertmanager_http_prefix: /alertmanager
-# TODO(sreis): should be true
-auth_enabled: false
+auth_enabled: true
 distributor:
   shard_by_all_labels: true
   pool:
