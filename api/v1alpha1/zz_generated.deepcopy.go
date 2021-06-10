@@ -122,6 +122,11 @@ func (in *CortexSpec) DeepCopyInto(out *CortexSpec) {
 		*out = new(DeploymentSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.RulerSpec != nil {
+		in, out := &in.RulerSpec, &out.RulerSpec
+		*out = new(DeploymentSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Memcached != nil {
 		in, out := &in.Memcached, &out.Memcached
 		*out = new(MemcachedSpec)
@@ -185,6 +190,11 @@ func (in *CortexStatus) DeepCopyInto(out *CortexStatus) {
 	}
 	if in.AlertManagerRef != nil {
 		in, out := &in.AlertManagerRef, &out.AlertManagerRef
+		*out = new(v1.LocalObjectReference)
+		**out = **in
+	}
+	if in.RulerRef != nil {
+		in, out := &in.RulerRef, &out.RulerRef
 		*out = new(v1.LocalObjectReference)
 		**out = **in
 	}
