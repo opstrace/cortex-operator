@@ -44,6 +44,7 @@ type CortexSpec struct {
 	QuerierSpec       *DeploymentSpec  `json:"querier_spec,omitempty"`
 	QueryFrontendSpec *DeploymentSpec  `json:"query_frontend_spec,omitempty"`
 	AlertManagerSpec  *DeploymentSpec  `json:"alertmanager_spec,omitempty"`
+	RulerSpec         *DeploymentSpec  `json:"ruler_spec,omitempty"`
 
 	Memcached *MemcachedSpec `json:"memcached,omitempty"`
 
@@ -73,6 +74,7 @@ type CortexStatus struct {
 	CompactorRef     *corev1.LocalObjectReference `json:"compactor,omitempty"`
 	StoreGatewayRef  *corev1.LocalObjectReference `json:"store_gateway,omitempty"`
 	AlertManagerRef  *corev1.LocalObjectReference `json:"alertmanager,omitempty"`
+	RulerRef         *corev1.LocalObjectReference `json:"ruler,omitempty"`
 }
 
 // MemcachedReference holds references to all the Memcached StatefulSets
