@@ -117,6 +117,11 @@ func (in *CortexSpec) DeepCopyInto(out *CortexSpec) {
 		*out = new(DeploymentSpec)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.AlertManagerSpec != nil {
+		in, out := &in.AlertManagerSpec, &out.AlertManagerSpec
+		*out = new(DeploymentSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Memcached != nil {
 		in, out := &in.Memcached, &out.Memcached
 		*out = new(MemcachedSpec)
@@ -175,6 +180,11 @@ func (in *CortexStatus) DeepCopyInto(out *CortexStatus) {
 	}
 	if in.StoreGatewayRef != nil {
 		in, out := &in.StoreGatewayRef, &out.StoreGatewayRef
+		*out = new(v1.LocalObjectReference)
+		**out = **in
+	}
+	if in.AlertManagerRef != nil {
+		in, out := &in.AlertManagerRef, &out.AlertManagerRef
 		*out = new(v1.LocalObjectReference)
 		**out = **in
 	}
@@ -343,6 +353,11 @@ func (in *StatefulSetSpec) DeepCopyInto(out *StatefulSetSpec) {
 		in, out := &in.DatadirSize, &out.DatadirSize
 		x := (*in).DeepCopy()
 		*out = &x
+	}
+	if in.StorageClassName != nil {
+		in, out := &in.StorageClassName, &out.StorageClassName
+		*out = new(string)
+		**out = **in
 	}
 	if in.Replicas != nil {
 		in, out := &in.Replicas, &out.Replicas

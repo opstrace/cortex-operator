@@ -150,6 +150,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CortexRuntimeConfig")
 		os.Exit(1)
 	}
+	if err = (&controllers.CortexAlertManagerReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("CortexAlertManager"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CortexAlertManager")
+		os.Exit(1)
+	}
 	if err = (&cortexv1alpha1.Cortex{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Cortex")
 		os.Exit(1)
