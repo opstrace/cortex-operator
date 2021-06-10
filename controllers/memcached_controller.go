@@ -146,7 +146,7 @@ func (r *MemcachedReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		cortex.Spec.Memcached.Image,
 		cortex.Spec.Memcached.ResultsCacheSpec,
 	)
-	cortex.Status.MemcachedRef.ResultsCacheRef = svc.ref
+	cortex.Status.MemcachedRef.ResultsCacheRef = sts.ref
 	err = krr.Reconcile(ctx, sts)
 	if err != nil {
 		return ctrl.Result{}, err
