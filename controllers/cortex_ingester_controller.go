@@ -122,7 +122,7 @@ func NewIngesterStatefulSet(
 		mutator: func() error {
 			sts.Spec.ServiceName = "ingester"
 			sts.Spec.Replicas = cortex.Spec.IngesterSpec.Replicas
-			sts.Spec.PodManagementPolicy = appsv1.OrderedReadyPodManagement
+			sts.Spec.PodManagementPolicy = appsv1.ParallelPodManagement
 			sts.Spec.Selector = &metav1.LabelSelector{
 				MatchLabels: map[string]string{"name": "ingester"},
 			}
