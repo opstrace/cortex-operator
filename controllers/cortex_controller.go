@@ -95,7 +95,7 @@ func (r *CortexReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, err
 	}
 
-	sa := NewServiceAccount(req)
+	sa := NewServiceAccount(req, cortex)
 	err = krr.Reconcile(ctx, sa)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -141,12 +141,20 @@ func NewCortexConfigMap(
 	}
 }
 
-func NewServiceAccount(req ctrl.Request) *KubernetesResource {
-	serviceAccount := &corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: ServiceAccountName, Namespace: req.Namespace}}
+func NewServiceAccount(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *KubernetesResource {
+	serviceAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ServiceAccountName,
+			Namespace: req.Namespace,
+		},
+	}
 
 	return &KubernetesResource{
 		obj: serviceAccount,
 		mutator: func() error {
+			if cortex.Spec.ServiceAccountSpec != nil {
+				serviceAccount.Annotations = cortex.Spec.ServiceAccountSpec.Annotations
+			}
 			return nil
 		},
 	}

@@ -37,6 +37,8 @@ type CortexSpec struct {
 	// Image of Cortex to deploy.
 	Image string `json:"image,omitempty"`
 
+	ServiceAccountSpec *ServiceAccountSpec `json:"service_account_spec,omitempty"`
+
 	IngesterSpec      *StatefulSetSpec `json:"ingester_spec,omitempty"`
 	CompactorSpec     *StatefulSetSpec `json:"compactor_spec,omitempty"`
 	StoreGatewaySpec  *StatefulSetSpec `json:"store_gateway_spec,omitempty"`
@@ -141,6 +143,10 @@ func (m *MemcachedStatefulSetSpec) AsArgs() []string {
 type RuntimeConfigSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Overrides runtime.RawExtension `json:"overrides,omitempty"`
+}
+
+type ServiceAccountSpec struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 //+kubebuilder:object:root=true

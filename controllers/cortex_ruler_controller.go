@@ -181,6 +181,7 @@ func NewRulerDeployment(
 					},
 				},
 			}
+			deploy.Spec.Template.Spec.ServiceAccountName = ServiceAccountName
 			deploy.Spec.Template.Spec.Volumes = []corev1.Volume{
 				{
 					Name: "cortex",
