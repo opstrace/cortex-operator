@@ -239,7 +239,7 @@ alertmanager:
   enable_api: true
   cluster:
     peers: 'alertmanager.{{.Namespace}}.svc.cluster.local:9094'
-  sharding_enabled: false
+  sharding_enabled: true
   sharding_ring:
     kvstore:
       store: memberlist
