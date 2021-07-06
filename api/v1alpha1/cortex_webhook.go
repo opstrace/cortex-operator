@@ -49,6 +49,51 @@ var _ webhook.Defaulter = &Cortex{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *Cortex) Default() {
 	cortexlog.Info("default", "name", r.Name)
+
+	if r.Spec.Memcached == nil {
+		r.Spec.Memcached = &MemcachedSpec{}
+	}
+	r.Spec.Memcached.Default()
+
+	if r.Spec.IngesterSpec == nil {
+		r.Spec.IngesterSpec = &StatefulSetSpec{}
+	}
+	r.Spec.IngesterSpec.Default()
+
+	if r.Spec.CompactorSpec == nil {
+		r.Spec.CompactorSpec = &StatefulSetSpec{}
+	}
+	r.Spec.CompactorSpec.Default()
+
+	if r.Spec.StoreGatewaySpec == nil {
+		r.Spec.StoreGatewaySpec = &StatefulSetSpec{}
+	}
+	r.Spec.StoreGatewaySpec.Default()
+
+	if r.Spec.DistributorSpec == nil {
+		r.Spec.DistributorSpec = &DeploymentSpec{}
+	}
+	r.Spec.DistributorSpec.Default()
+
+	if r.Spec.QuerierSpec == nil {
+		r.Spec.QuerierSpec = &DeploymentSpec{}
+	}
+	r.Spec.QuerierSpec.Default()
+
+	if r.Spec.QueryFrontendSpec == nil {
+		r.Spec.QueryFrontendSpec = &DeploymentSpec{}
+	}
+	r.Spec.QueryFrontendSpec.Default()
+
+	if r.Spec.AlertManagerSpec == nil {
+		r.Spec.AlertManagerSpec = &DeploymentSpec{}
+	}
+	r.Spec.AlertManagerSpec.Default()
+
+	if r.Spec.RulerSpec == nil {
+		r.Spec.RulerSpec = &DeploymentSpec{}
+	}
+	r.Spec.RulerSpec.Default()
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -160,7 +205,7 @@ func (r *Cortex) AsCortexConfig() (*cortex.Config, error) {
 func (r *Cortex) Validate() error {
 	cfg, err := r.AsCortexConfig()
 	if err != nil {
-		return nil
+		return err
 	}
 	// Validate the cortex configuration.
 	return cfg.Validate(nil)

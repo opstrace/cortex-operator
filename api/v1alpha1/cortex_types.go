@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -100,20 +101,33 @@ func (r *MemcachedReference) IsSet() bool {
 }
 
 type StatefulSetSpec struct {
-	//+kubebuilder:default="1Gi"
 	DatadirSize      *resource.Quantity `json:"datadir_size,omitempty"`
 	StorageClassName *string            `json:"storage_class_name,omitempty"`
-	//+kubebuilder:default=2
-	Replicas *int32 `json:"replicas,omitempty"`
+	Replicas         *int32             `json:"replicas,omitempty"`
+}
+
+func (s *StatefulSetSpec) Default() {
+	if s.DatadirSize == nil {
+		r := resource.MustParse("1Gi")
+		s.DatadirSize = &r
+	}
+
+	if s.Replicas == nil {
+		s.Replicas = pointer.Int32Ptr(2)
+	}
 }
 
 type DeploymentSpec struct {
-	//+kubebuilder:default=2
 	Replicas *int32 `json:"replicas,omitempty"`
 }
 
+func (s *DeploymentSpec) Default() {
+	if s.Replicas == nil {
+		s.Replicas = pointer.Int32Ptr(2)
+	}
+}
+
 type MemcachedSpec struct {
-	//+kubebuilder:default="memcached:1.6.9-alpine"
 	Image string `json:"image,omitempty"`
 
 	ChunksCacheSpec       *MemcachedStatefulSetSpec `json:"chunks_cache_spec,omitempty"`
@@ -123,14 +137,39 @@ type MemcachedSpec struct {
 	MetadataCacheSpec     *MemcachedStatefulSetSpec `json:"metadata_cache_spec,omitempty"`
 }
 
+func (m *MemcachedSpec) Default() {
+	if m.Image == "" {
+		m.Image = "memcached:1.6.9-alpine"
+	}
+
+	if m.ChunksCacheSpec == nil {
+		m.ChunksCacheSpec = &MemcachedStatefulSetSpec{}
+	}
+	if m.IndexQueriesCacheSpec == nil {
+		m.IndexQueriesCacheSpec = &MemcachedStatefulSetSpec{}
+	}
+	if m.IndexWritesCacheSpec == nil {
+		m.IndexWritesCacheSpec = &MemcachedStatefulSetSpec{}
+	}
+	if m.ResultsCacheSpec == nil {
+		m.ResultsCacheSpec = &MemcachedStatefulSetSpec{}
+	}
+	if m.MetadataCacheSpec == nil {
+		m.MetadataCacheSpec = &MemcachedStatefulSetSpec{}
+	}
+
+	m.ChunksCacheSpec.Default()
+	m.IndexQueriesCacheSpec.Default()
+	m.IndexWritesCacheSpec.Default()
+	m.ResultsCacheSpec.Default()
+	m.MetadataCacheSpec.Default()
+}
+
 type MemcachedStatefulSetSpec struct {
-	//+kubebuilder:default=2
 	Replicas *int32 `json:"replicas,omitempty"`
 	// MemoryLimit is the item memory in megabytes
-	//+kubebuilder:default=4096
 	MemoryLimit *int32 `json:"memory_limit,omitempty"`
 	// MaxItemSize adjusts max item size
-	//+kubebuilder:default="2m"
 	MaxItemSize *string `json:"max_item_size,omitempty"`
 }
 
@@ -141,9 +180,19 @@ func (m *MemcachedStatefulSetSpec) AsArgs() []string {
 	}
 }
 
-type RuntimeConfigSpec struct {
-	// +kubebuilder:pruning:PreserveUnknownFields
-	Overrides runtime.RawExtension `json:"overrides,omitempty"`
+func (m *MemcachedStatefulSetSpec) Default() {
+	if m == nil {
+		m = &MemcachedStatefulSetSpec{}
+	}
+	if m.Replicas == nil {
+		m.Replicas = pointer.Int32Ptr(2)
+	}
+	if m.MemoryLimit == nil {
+		m.MemoryLimit = pointer.Int32Ptr(4096)
+	}
+	if m.MaxItemSize == nil {
+		m.MaxItemSize = pointer.StringPtr("2m")
+	}
 }
 
 type ServiceAccountSpec struct {
