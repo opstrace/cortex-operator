@@ -55,7 +55,8 @@ type CortexSpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	Config runtime.RawExtension `json:"config,omitempty"`
 
-	RuntimeConfig *RuntimeConfigSpec `json:"runtime_config,omitempty"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	RuntimeConfig *runtime.RawExtension `json:"runtime_config,omitempty"`
 }
 
 func (c *CortexSpec) ConfigSHA() string {

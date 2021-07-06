@@ -106,7 +106,7 @@ func NewCortexRuntimeConfigMap(
 		},
 	}
 
-	y, err := cortex.Spec.RuntimeConfig.AsYAML()
+	y, err := cortex.RuntimeConfigAsYAML()
 	if err != nil {
 		return nil, err
 	}
