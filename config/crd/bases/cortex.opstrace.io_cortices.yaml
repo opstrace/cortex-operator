@@ -198,11 +198,8 @@ spec:
                     type: integer
                 type: object
               runtime_config:
-                properties:
-                  overrides:
-                    type: object
-                    x-kubernetes-preserve-unknown-fields: true
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               service_account_spec:
                 properties:
                   annotations:
