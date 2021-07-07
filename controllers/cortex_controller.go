@@ -152,9 +152,23 @@ func NewServiceAccount(req ctrl.Request, cortex *cortexv1alpha1.Cortex) *Kuberne
 	return &KubernetesResource{
 		obj: serviceAccount,
 		mutator: func() error {
-			if cortex.Spec.ServiceAccountSpec != nil {
-				serviceAccount.Annotations = cortex.Spec.ServiceAccountSpec.Annotations
+			// nothing to do if nothing is set
+			if cortex.Spec.ServiceAccountSpec == nil {
+				return nil
 			}
+
+			serviceAccount.Annotations = cortex.Spec.ServiceAccountSpec.Annotations
+			if len(cortex.Spec.ServiceAccountSpec.ImagePullSecrets) > 0 {
+				serviceAccount.ImagePullSecrets = make(
+					[]corev1.LocalObjectReference,
+					len(cortex.Spec.ServiceAccountSpec.ImagePullSecrets),
+				)
+				copy(
+					serviceAccount.ImagePullSecrets,
+					cortex.Spec.ServiceAccountSpec.ImagePullSecrets,
+				)
+			}
+
 			return nil
 		},
 	}

@@ -197,6 +197,11 @@ func (m *MemcachedStatefulSetSpec) Default() {
 
 type ServiceAccountSpec struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
+	// ImagePullSecrets is a list of references to secrets in the same namespace
+	// to use for pulling any images in pods that reference this ServiceAccount.
+	// More info:
+	// https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+	ImagePullSecrets []corev1.LocalObjectReference `json:"image_pull_secrets,omitempty"`
 }
 
 //+kubebuilder:object:root=true
