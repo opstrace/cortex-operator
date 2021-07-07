@@ -182,6 +182,23 @@ spec:
         max_series_per_query: 100000
 ```
 
+## Specifying Kubernetes imagePullSecrets
+
+To set the [imagePullSecrets](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod) with the `cortex-operator` you can set the `.spec.service_account_spec.image_pull_secrets` field.
+
+Example:
+
+```
+apiVersion: cortex.opstrace.io/v1alpha1
+kind: Cortex
+metadata:
+  name: cortex-sample
+spec:
+  service_account_spec:
+    image_pull_secrets:
+    - name: secret-name
+```
+
 ## Roadmap
 
 - Deploy Cortex in different topologies
