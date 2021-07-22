@@ -47,8 +47,8 @@ type kubernetesResource struct {
 const FinalizerName = "cortex.opstrace.io/finalizer"
 const ServiceAccountName = "cortex"
 const CortexConfigShasumAnnotationName = "cortex-operator/cortex-config-shasum"
-const CortexConfigMapName = "cortex-config"
-const CortexRuntimeConfigMapName = "cortex-runtime-config"
+const CortexConfigMapNameSuffix = "-config"
+const CortexRuntimeConfigMapNameSuffix = "-runtime-config"
 const GossipRingServiceName = "gossip-ring"
 
 //+kubebuilder:rbac:groups=cortex.opstrace.io,resources=cortices,verbs=get;list;watch;create;update;patch;delete
@@ -121,11 +121,12 @@ func NewCortexConfigMap(
 	req ctrl.Request,
 	cortex *cortexv1alpha1.Cortex,
 ) *KubernetesResource {
+	name := cortex.Name + CortexConfigMapNameSuffix
 	// Validation errors were handled by the webhooks.
 	y, _ := cortex.AsYAML()
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      CortexConfigMapName,
+			Name:      name,
 			Namespace: req.Namespace,
 		},
 	}

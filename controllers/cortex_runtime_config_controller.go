@@ -99,9 +99,10 @@ func NewCortexRuntimeConfigMap(
 	req ctrl.Request,
 	cortex *cortexv1alpha1.Cortex,
 ) (*KubernetesResource, error) {
+	name := cortex.Name + CortexRuntimeConfigMapNameSuffix
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      CortexRuntimeConfigMapName,
+			Name:      name,
 			Namespace: req.Namespace,
 		},
 	}

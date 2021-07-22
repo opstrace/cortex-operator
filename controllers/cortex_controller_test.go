@@ -35,6 +35,7 @@ import (
 var _ = Describe("Cortex controller", func() {
 	const (
 		CortexName      = "test-cortex"
+		configMapName   = CortexName + CortexConfigMapNameSuffix
 		CortexNamespace = "default"
 
 		timeout  = time.Second * 10
@@ -48,6 +49,7 @@ var _ = Describe("Cortex controller", func() {
 			ctx := context.Background()
 			manifest := filepath.Join("..", "config", "samples", "cortex_v1alpha1_cortex.yaml")
 			testCortex := GetCortexTestSample(manifest)
+			testCortex.Name = CortexName
 			Expect(k8sClient.Create(ctx, testCortex)).Should(Succeed())
 		})
 
@@ -62,7 +64,7 @@ var _ = Describe("Cortex controller", func() {
 			},
 			Entry(
 				"creates a config map with cortex configuration",
-				types.NamespacedName{Name: CortexConfigMapName, Namespace: CortexNamespace},
+				types.NamespacedName{Name: configMapName, Namespace: CortexNamespace},
 				&corev1.ConfigMap{},
 				func(createdObj client.Object) {
 					_, ok := createdObj.(*corev1.ConfigMap)
