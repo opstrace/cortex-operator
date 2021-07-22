@@ -115,6 +115,8 @@ func NewIngesterStatefulSet(
 		CortexConfigShasumAnnotationName: cortex.Spec.ConfigSHA(),
 	}
 	ref := &corev1.LocalObjectReference{Name: name}
+	configMapName := cortex.Name + CortexConfigMapNameSuffix
+	runtimeConfigMapName := cortex.Name + CortexRuntimeConfigMapNameSuffix
 
 	return &KubernetesResource{
 		obj: sts,
@@ -187,14 +189,14 @@ func NewIngesterStatefulSet(
 								{
 									ConfigMap: &corev1.ConfigMapProjection{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: CortexConfigMapName,
+											Name: configMapName,
 										},
 									},
 								},
 								{
 									ConfigMap: &corev1.ConfigMapProjection{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: CortexRuntimeConfigMapName,
+											Name: runtimeConfigMapName,
 										},
 									},
 								},

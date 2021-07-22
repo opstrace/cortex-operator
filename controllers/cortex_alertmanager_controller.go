@@ -147,6 +147,9 @@ func NewAlertManagerDeployment(
 	}
 	ref := &corev1.LocalObjectReference{Name: AlertManagerName}
 
+	configMapName := cortex.Name + CortexConfigMapNameSuffix
+	runtimeConfigMapName := cortex.Name + CortexRuntimeConfigMapNameSuffix
+
 	return &KubernetesResource{
 		obj: deploy,
 		ref: ref,
@@ -195,27 +198,17 @@ func NewAlertManagerDeployment(
 								{
 									ConfigMap: &corev1.ConfigMapProjection{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: CortexConfigMapName,
+											Name: configMapName,
 										},
 									},
 								},
 								{
 									ConfigMap: &corev1.ConfigMapProjection{
 										LocalObjectReference: corev1.LocalObjectReference{
-											Name: CortexRuntimeConfigMapName,
+											Name: runtimeConfigMapName,
 										},
 									},
 								},
-							},
-						},
-					},
-				},
-				{
-					Name: CortexRuntimeConfigMapName,
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: CortexRuntimeConfigMapName,
 							},
 						},
 					},
