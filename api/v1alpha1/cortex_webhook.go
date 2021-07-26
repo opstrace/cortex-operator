@@ -215,6 +215,7 @@ const DefaultCortexConfigTemplate = `
 http_prefix: ''
 api:
   alertmanager_http_prefix: /alertmanager
+  response_compression_enabled: true
 auth_enabled: true
 distributor:
   shard_by_all_labels: true
