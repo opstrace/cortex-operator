@@ -222,7 +222,9 @@ distributor:
   pool:
     health_check_ingesters: true
   ha_tracker:
-    enable_ha_tracker: false
+    enable_ha_tracker: true
+    kvstore:
+      store: memberlist
 memberlist:
   abort_if_cluster_join_fails: true
   bind_port: 7946
