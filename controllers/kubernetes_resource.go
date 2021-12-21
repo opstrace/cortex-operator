@@ -164,6 +164,7 @@ func NewDeployment(
 						"-target=" + name,
 						"-config.file=/etc/cortex/config.yaml",
 					},
+					Env: spec.Env,
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          "http",
@@ -246,13 +247,14 @@ func NewStatefulSet(
 			sts.Spec.Template.Spec.Affinity = WithPodAntiAffinity(name)
 			sts.Spec.Template.Spec.Containers = []corev1.Container{
 				{
-					Name:  name,
-					Image: cortex.Spec.Image,
+					Name:            name,
+					Image:           cortex.Spec.Image,
+					ImagePullPolicy: corev1.PullIfNotPresent,
 					Args: []string{
 						"-target=" + name,
 						"-config.file=/etc/cortex/config.yaml",
 					},
-					ImagePullPolicy: corev1.PullIfNotPresent,
+					Env: spec.Env,
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          "http",

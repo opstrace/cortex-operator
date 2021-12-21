@@ -133,14 +133,15 @@ func NewIngesterStatefulSet(
 			sts.Spec.Template.Spec.Affinity = WithPodAntiAffinity("ingester")
 			sts.Spec.Template.Spec.Containers = []corev1.Container{
 				{
-					Name:  "ingester",
-					Image: cortex.Spec.Image,
+					Name:            "ingester",
+					Image:           cortex.Spec.Image,
+					ImagePullPolicy: corev1.PullIfNotPresent,
 					Args: []string{
 						"-target=ingester",
 						"-ingester.chunk-encoding=3",
 						"-config.file=/etc/cortex/config.yaml",
 					},
-					ImagePullPolicy: corev1.PullIfNotPresent,
+					Env: cortex.Spec.IngesterSpec.Env,
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          "http",

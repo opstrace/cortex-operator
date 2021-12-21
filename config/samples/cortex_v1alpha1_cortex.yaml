@@ -52,3 +52,89 @@ spec:
       s3:
         bucket_name: cortex-operator-example-209f-config
         endpoint: s3.us-west-2.amazonaws.com
+
+  runtime_config:
+    ingester_limits:
+      max_inflight_push_requests: 1000
+
+  alertmanager_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+  compactor_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+    datadir_size: 30Gi
+    storage_class_name: pd-ssd
+  distributor_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+    - name: JAEGER_SAMPLER_MANAGER_HOST_PORT
+      value: foo:1234
+  ingester_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+    - name: JAEGER_SAMPLER_MANAGER_HOST_PORT
+      value: foo:1234
+    datadir_size: 30Gi
+    storage_class_name: pd-ssd
+  querier_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+      value: foo:1234
+  query_frontend_spec:
+    replicas: 2
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+    - name: JAEGER_SAMPLER_MANAGER_HOST_PORT
+      value: foo:1234
+  ruler_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+    - name: JAEGER_SAMPLER_MANAGER_HOST_PORT
+      value: foo:1234
+  store_gateway_spec:
+    replicas: 3
+    env:
+    - name: JAEGER_AGENT_HOST
+      value: foo
+    datadir_size: 30Gi
+    storage_class_name: pd-ssd
+
+  memcached:
+    image: memcached:1.6.9-alpine
+    chunks_cache_spec:
+      replicas: 2
+      max_item_size: 2m
+      memory_limit: 4096
+    index_queries_cache_spec:
+      replicas: 2
+      max_item_size: 2m
+      memory_limit: 4096
+    index_writes_cache_spec:
+      replicas: 2
+      max_item_size: 2m
+      memory_limit: 4096
+    metadata_cache_spec:
+      replicas: 2
+      max_item_size: 2m
+      memory_limit: 4096
+    results_cache_spec:
+      replicas: 2
+      max_item_size: 2m
+      memory_limit: 4096
+
+  service_account_spec:
+    annotations: {}

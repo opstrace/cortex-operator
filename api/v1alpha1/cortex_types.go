@@ -104,6 +104,7 @@ type StatefulSetSpec struct {
 	DatadirSize      *resource.Quantity `json:"datadir_size,omitempty"`
 	StorageClassName *string            `json:"storage_class_name,omitempty"`
 	Replicas         *int32             `json:"replicas,omitempty"`
+	Env              []corev1.EnvVar    `json:"env,omitempty"`
 }
 
 func (s *StatefulSetSpec) Default() {
@@ -115,15 +116,24 @@ func (s *StatefulSetSpec) Default() {
 	if s.Replicas == nil {
 		s.Replicas = pointer.Int32Ptr(2)
 	}
+
+	if s.Env == nil {
+		s.Env = make([]corev1.EnvVar, 0)
+	}
 }
 
 type DeploymentSpec struct {
-	Replicas *int32 `json:"replicas,omitempty"`
+	Replicas *int32          `json:"replicas,omitempty"`
+	Env      []corev1.EnvVar `json:"env,omitempty"`
 }
 
 func (s *DeploymentSpec) Default() {
 	if s.Replicas == nil {
 		s.Replicas = pointer.Int32Ptr(2)
+	}
+
+	if s.Env == nil {
+		s.Env = make([]corev1.EnvVar, 0)
 	}
 }
 

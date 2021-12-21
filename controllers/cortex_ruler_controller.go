@@ -169,6 +169,7 @@ func NewRulerDeployment(
 						"-target=" + RulerName,
 						"-config.file=/etc/cortex/config.yaml",
 					},
+					Env: spec.Env,
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          "http",
